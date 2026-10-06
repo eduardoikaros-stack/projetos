@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Editor IA</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background: #f5f6f8;
+      color: #202124;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      background: #ffffff;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .logo {
+      font-size: 18px;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .status {
+      color: #6b7280;
+      font-size: 13px;
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 20px;
+      padding: 24px;
+    }
+
+    .workspace,
+    .control-panel {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+    }
+
+    .workspace {
+      display: flex;
+      flex-direction: column;
+      min-height: 600px;
+      overflow: hidden;
+    }
+
+    .workspace-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .workspace-toolbar span {
+      color: #6b7280;
+      font-size: 13px;
+    }
+
+    textarea {
+      width: 100%;
+      resize: none;
+      border: 0;
+      outline: 0;
+      font: inherit;
+    }
+
+    #content {
+      flex: 1;
+      min-height: 520px;
+      padding: 24px;
+      font-size: 16px;
+      line-height: 1.6;
+      color: #374151;
+    }
+
+    .control-panel {
+      padding: 20px;
+      height: fit-content;
+    }
+
+    .control-panel h2 {
+      margin-bottom: 8px;
+      font-size: 17px;
+    }
+
+    .description {
+      margin-bottom: 20px;
+      color: #6b7280;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    label {
+      display: block;
+      margin: 16px 0 8px;
+      color: #374151;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    #instruction {
+      min-height: 130px;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      outline: none;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    #instruction:focus,
+    #content:focus {
+      border-color: #6366f1;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    button {
+      min-height: 40px;
+      border: 0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      opacity: 0.85;
+    }
+
+    .primary {
+      grid-column: span 2;
+      background: #4f46e5;
+      color: #ffffff;
+    }
+
+    .secondary {
+      background: #eef2ff;
+      color: #3730a3;
+    }
+
+    .danger {
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+
+    .response {
+      min-height: 80px;
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f9fafb;
+      color: #6b7280;
+      font-size: 13px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    @media (max-width: 800px) {
+      main {
+        grid-template-columns: 1fr;
+        padding: 12px;
+      }
+
+      .workspace {
+        min-height: 450px;
+      }
+
+      #content {
+        min-height: 370px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header>
+      <div class="logo">Editor IA</div>
+      <div class="status" id="status">Pronto</div>
+    </header>
+
+    <main>
+      <section class="workspace">
+        <div class="workspace-toolbar">
+          <span>Área de trabalho</span>
+          <span>Edite livremente</span>
+        </div>
+
+        <textarea
+          id="content"
+          placeholder="Digite ou cole aqui o conteúdo que deseja criar ou editar..."
+        ></textarea>
+      </section>
+
+      <aside class="control-panel">
+        <h2>Comando</h2>
+
+        <p class="description">
+          Escreva o que deseja fazer com o conteúdo da área de trabalho.
+        </p>
+
+        <label for="instruction">Instrução</label>
+
+        <textarea
+          id="instruction"
+          placeholder="Exemplo: corrija os erros de português, deixe mais profissional..."
+        ></textarea>
+
+        <div class="buttons">
+          <button class="primary" onclick="sendToAI()">
+            Executar
+          </button>
+
+          <button class="secondary" onclick="createContent()">
+            Criar
+          </button>
+
+          <button class="secondary" onclick="improveContent()">
+            Ajustar
+          </button>
+
+          <button class="danger" onclick="clearEditor()">
+            Limpar
+          </button>
+        </div>
+
+        <div class="response" id="response">
+          A resposta da IA aparecerá aqui.
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    const content = document.getElementById("content");
+    const instruction = document.getElementById("instruction");
+    const response = document.getElementById("response");
+    const statusText = document.getElementById("status");
+
+    function setStatus(text) {
+      statusText.textContent = text;
+    }
+
+    function createContent() {
+      instruction.value = "Crie um conteúdo novo sobre: ";
+      instruction.focus();
+    }
+
+    function improveContent() {
+      instruction.value =
+        "Ajuste o conteúdo, corrija os erros e deixe o texto mais claro e profissional.";
+      instruction.focus();
+    }
+
+    function clearEditor() {
+      content.value = "";
+      instruction.value = "";
+      response.textContent = "Área limpa.";
+      setStatus("Pronto");
+    }
+
+    async function sendToAI() {
+      const texto = content.value.trim();
+      const comando = instruction.value.trim();
+
+      if (!comando) {
+        response.textContent = "Escreva uma instrução antes de executar.";
+        return;
+      }
+
+      setStatus("Processando...");
+      response.textContent = "Enviando solicitação...";
+
+      try {
+        const resultado = await fetch("/api/gemini", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            content: texto,
+            instruction: comando
+          })
+        });
+
+        if (!resultado.ok) {
+          throw new Error("Erro na comunicação com o servidor.");
+        }
+
+        const dados = await resultado.json();
+
+        content.value = dados.text || dados.response || "";
+        response.textContent = "Conteúdo atualizado.";
+        setStatus("Concluído");
+      } catch (erro) {
+        response.textContent =
+          "A interface está funcionando, mas o backend da Gemini ainda não foi conectado.";
+        setStatus("Backend não conectado");
+      }
+    }
+  </script>
+</body>
+</html>
