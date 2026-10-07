@@ -1,171 +1,212 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gráfico de Velas (Timeframe de 1 Hora) - Binance API em Reais</title>
-    <!-- Biblioteca TradingView Lightweight Charts -->
-    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #121212;
-            color: #ffffff;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        h2 {
-            margin-bottom: 5px;
-        }
-        #info {
-            font-size: 14px;
-            color: #00ffcc;
-            margin-bottom: 15px;
-        }
-        #chart-container {
-            width: 100%;
-            max-width: 1000px;
-            height: 550px;
-            background: #1e1e1e;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            padding: 10px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Salas ao Vivo — Day Trade</title>
+
+  <style>
+    :root {
+      --fundo: #000;
+      --card: #111;
+      --amarelo: #ffd43b;
+      --vermelho: #ef4444;
+      --azul: #3b82f6;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      overflow-x: hidden;
+      background: var(--fundo);
+      color: #fff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    }
+
+    h1 {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 16px 12px 8px;
+      color: var(--amarelo);
+      font-size: clamp(1.5rem, 5vw, 2.3rem);
+      font-weight: 800;
+      line-height: 1.2;
+      text-align: center;
+    }
+
+    .bolinha-titulo {
+      width: 14px;
+      height: 14px;
+      flex: 0 0 14px;
+      border-radius: 50%;
+      background: #ff3b30;
+      box-shadow: 0 0 8px #ff3b30;
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.6;
+        transform: scale(0.85);
+      }
+    }
+
+    .container-externo {
+      width: 100%;
+    }
+
+    .card {
+      width: 100%;
+      margin: 0 0 16px;
+      overflow: hidden;
+      background: var(--card);
+    }
+
+    .player-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+    }
+
+    .youtube-player {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .nome-canal {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px 14px;
+      font-size: 15px;
+    }
+
+    .nome-esq {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+    }
+
+    .etiqueta-aovivo {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+      padding: 4px 9px;
+      border-radius: 6px;
+      background: linear-gradient(90deg, #ef4444, #dc2626);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .etiqueta-aovivo::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    .bolinha {
+      width: 12px;
+      height: 12px;
+      flex: 0 0 12px;
+      border-radius: 50%;
+    }
+
+    .azul {
+      background: var(--azul);
+      box-shadow: 0 0 6px var(--azul);
+    }
+
+    .vermelha {
+      background: var(--vermelho);
+      box-shadow: 0 0 6px var(--vermelho);
+    }
+
+    @media (max-width: 520px) {
+      .nome-canal {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+      .etiqueta-aovivo {
+        align-self: flex-start;
+      }
+    }
+  </style>
 </head>
+
 <body>
+  <h1>
+    <span class="bolinha-titulo" aria-hidden="true"></span>
+    Salas ao Vivo — Day Trade
+  </h1>
 
-    <h2>Gráfico de Velas por Hora - Bitcoin (BTC/BRL)</h2>
-    <div id="info">Conectando à API da Binance e obtendo cotação do Real...</div>
-    
-    <div id="chart-container"></div>
+  <main class="container-externo">
+    <!-- CARD 1 -->
+    <section class="card" aria-label="Sheriffao.Trader — Day Trade">
+      <div class="player-wrap">
+        <iframe 
+          class="youtube-player"
+          src="https://www.youtube.com/embed/b-S_iToVtQo"
+          title="Sheriffao.Trader — Day Trade"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      </div>
+      <div class="nome-canal">
+        <div class="nome-esq">
+          <span class="bolinha vermelha" aria-hidden="true"></span>
+          <span>Sheriffao.Trader — Day Trade</span>
+        </div>
+        <span class="etiqueta-aovivo">AO VIVO</span>
+      </div>
+    </section>
 
-    <script>
-        async function iniciarGrafico() {
-            const infoDiv = document.getElementById('info');
-            const container = document.getElementById('chart-container');
+    <!-- CARD 2 -->
+    <section class="card" aria-label="Genial Investimentos — Sala ao Vivo">
+      <div class="player-wrap">
+        <iframe 
+          class="youtube-player"
+          src="https://www.youtube.com/embed/"
+          title="Genial Investimentos — Sala ao Vivo"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      </div>
+      <div class="nome-canal">
+        <div class="nome-esq">
+          <span class="bolinha azul" aria-hidden="true"></span>
+          <span>Genial Investimentos — Sala ao Vivo</span>
+        </div>
+        <span class="etiqueta-aovivo">AO VIVO</span>
+      </div>
+    </section>
+  </main>
 
-            // 1. Criar o gráfico
-            const chart = LightweightCharts.createChart(container, {
-                width: container.clientWidth,
-                height: 530,
-                layout: {
-                    background: { color: '#1e1e1e' },
-                    textColor: '#d1d4dc',
-                },
-                grid: {
-                    vertLines: { color: '#2b2b2b' },
-                    horzLines: { color: '#2b2b2b' },
-                },
-                timeScale: {
-                    borderColor: '#484848',
-                    timeVisible: true,
-                    secondsVisible: false,
-                },
-                priceFormat: {
-                    type: 'price',
-                    precision: 2,
-                    minMove: 0.01,
-                },
-            });
-
-            const candleSeries = chart.addCandlestickSeries({
-                upColor: '#26a69a',
-                downColor: '#ef5350',
-                borderVisible: false,
-                wickUpColor: '#26a69a',
-                wickDownColor: '#ef5350',
-            });
-
-            // Função para buscar a cotação atual do dólar (USDT/BRL)
-            async function obterCotacaoBRL() {
-                try {
-                    const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL');
-                    const data = await res.json();
-                    return parseFloat(data.price);
-                } catch (e) {
-                    console.warn("Não foi possível obter USDTBRL diretamente, usando fallback fixo ou aproximado.", e);
-                    return null;
-                }
-            }
-
-            try {
-                // Obter taxa de conversão para BRL
-                let taxaBRL = await obterCotacaoBRL();
-                if (!taxaBRL) {
-                    throw new Error("Falha ao obter taxa de câmbio para BRL.");
-                }
-
-                // 2. Buscar histórico de 1 hora do BTCUSDT
-                const urlKlines = 'https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=500';
-                const resposta = await fetch(urlKlines);
-                const dadosBrutos = await resposta.json();
-
-                if (!Array.isArray(dadosBrutos) || dadosBrutos.length === 0) {
-                    throw new Error("Dados inválidos da API.");
-                }
-
-                // 3. Converter os valores de USD para Reais (BRL)
-                const dadosFormatados = dadosBrutos.map(item => {
-                    return {
-                        time: Math.floor(item[0] / 1000), 
-                        open: parseFloat(item[1]) * taxaBRL,
-                        high: parseFloat(item[2]) * taxaBRL,
-                        low: parseFloat(item[3]) * taxaBRL,
-                        close: parseFloat(item[4]) * taxaBRL
-                    };
-                });
-
-                candleSeries.setData(dadosFormatados);
-                chart.timeScale().fitContent();
-
-                const totalVelas = dadosFormatados.length;
-                const primeiraData = new Date(dadosFormatados[0].time * 1000).toLocaleString('pt-BR');
-                const ultimaData = new Date(dadosFormatados[totalVelas - 1].time * 1000).toLocaleString('pt-BR');
-
-                infoDiv.innerHTML = `✅ Ao vivo (Valores em R$)! Carregadas ${totalVelas} velas | Período: ${primeiraData} até ${ultimaData}`;
-
-                // 4. Sistema de Atualização Rápida (Polling a cada 5 segundos)[cite: 1]
-                setInterval(async () => {
-                    try {
-                        // Atualiza a cotação do dólar e busca a última vela mais recente
-                        const novaTaxaBRL = await obterCotacaoBRL() || taxaBRL;
-                        const resTempoReal = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=1');
-                        const ultimoDadoBruto = await resTempoReal.json();
-
-                        if (Array.isArray(ultimoDadoBruto) && ultimoDadoBruto.length > 0) {
-                            const item = ultimoDadoBruto[0];
-                            const velaAtualizada = {
-                                time: Math.floor(item[0] / 1000),
-                                open: parseFloat(item[1]) * novaTaxaBRL,
-                                high: parseFloat(item[2]) * novaTaxaBRL,
-                                low: parseFloat(item[3]) * novaTaxaBRL,
-                                close: parseFloat(item[4]) * novaTaxaBRL
-                            };
-
-                            // Atualiza a última vela em tempo real no gráfico
-                            candleSeries.update(velaAtualizada);
-                        }
-                    } catch (err) {
-                        console.error("Erro na atualização rápida:", err);
-                    }
-                }, 5000); // Executa a cada 5 segundos[cite: 1]
-
-            } catch (erro) {
-                console.error(erro);
-                infoDiv.innerHTML = `<span style="color: #ef5350;">Erro ao conectar com a API da Binance.</span>`;
-            }
-
-            // Responsividade da tela
-            window.addEventListener('resize', () => {
-                chart.applyOptions({ width: container.clientWidth });
-            });
-        }
-
-        iniciarGrafico();
-    </script>
 </body>
 </html>
