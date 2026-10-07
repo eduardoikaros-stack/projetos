@@ -1,212 +1,266 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>Salas ao Vivo — Day Trade</title>
-
-  <style>
-    :root {
-      --fundo: #000;
-      --card: #111;
-      --amarelo: #ffd43b;
-      --vermelho: #ef4444;
-      --azul: #3b82f6;
-    }
-
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html,
-    body {
-      width: 100%;
-      min-height: 100%;
-      overflow-x: hidden;
-      background: var(--fundo);
-      color: #fff;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-    }
-
-    h1 {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 16px 12px 8px;
-      color: var(--amarelo);
-      font-size: clamp(1.5rem, 5vw, 2.3rem);
-      font-weight: 800;
-      line-height: 1.2;
-      text-align: center;
-    }
-
-    .bolinha-titulo {
-      width: 14px;
-      height: 14px;
-      flex: 0 0 14px;
-      border-radius: 50%;
-      background: #ff3b30;
-      box-shadow: 0 0 8px #ff3b30;
-      animation: pulse 1.8s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% {
-        opacity: 1;
-        transform: scale(1);
-      }
-      50% {
-        opacity: 0.6;
-        transform: scale(0.85);
-      }
-    }
-
-    .container-externo {
-      width: 100%;
-    }
-
-    .card {
-      width: 100%;
-      margin: 0 0 16px;
-      overflow: hidden;
-      background: var(--card);
-    }
-
-    .player-wrap {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      background: #000;
-    }
-
-    .youtube-player {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      border: 0;
-    }
-
-    .nome-canal {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 12px 14px 14px;
-      font-size: 15px;
-    }
-
-    .nome-esq {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      min-width: 0;
-    }
-
-    .etiqueta-aovivo {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      flex-shrink: 0;
-      padding: 4px 9px;
-      border-radius: 6px;
-      background: linear-gradient(90deg, #ef4444, #dc2626);
-      color: #fff;
-      font-size: 12px;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .etiqueta-aovivo::before {
-      content: "";
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #fff;
-    }
-
-    .bolinha {
-      width: 12px;
-      height: 12px;
-      flex: 0 0 12px;
-      border-radius: 50%;
-    }
-
-    .azul {
-      background: var(--azul);
-      box-shadow: 0 0 6px var(--azul);
-    }
-
-    .vermelha {
-      background: var(--vermelho);
-      box-shadow: 0 0 6px var(--vermelho);
-    }
-
-    @media (max-width: 520px) {
-      .nome-canal {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-      .etiqueta-aovivo {
-        align-self: flex-start;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Calendário Robôs 2026</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0e14;color:#e6edf7;font-family:system-ui,Arial,sans-serif;padding:20px;min-height:100vh}
+h1{font-size:22px;margin-bottom:4px;color:#fff}
+.sub{color:#8fa1bd;font-size:12px;margin-bottom:20px}
+.tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.tab{padding:8px 16px;border-radius:9px;background:#1c2940;border:1.5px solid #26344d;color:#e6edf7;font:800 12px system-ui;cursor:pointer;transition:.15s}
+.tab:hover{background:#26344d}
+.tab.on{background:linear-gradient(135deg,#56e39f,#0ecb81);color:#06111e;border-color:transparent}
+.resumo{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:20px}
+.card{background:#0f1a2e;border:1px solid #26344d;border-radius:11px;padding:10px 14px}
+.card .l{font:700 10px system-ui;color:#8fa1bd;letter-spacing:.5px;margin-bottom:3px}
+.card .v{font:900 20px monospace;color:#e6edf7}
+.card .v.pos{color:#56e39f}.card .v.neg{color:#ff7084}.card .v.emp{color:#ffd166}
+.cal{background:#0f1a2e;border:1px solid #26344d;border-radius:14px;padding:14px;overflow-x:auto}
+.hdr-dias{display:grid;grid-template-columns:90px repeat(31,minmax(38px,1fr));gap:4px;margin-bottom:6px;min-width:1000px}
+.hdr-dias .h{font:800 9px system-ui;color:#5d6f8c;text-align:center}
+.mes{display:grid;grid-template-columns:90px repeat(31,minmax(38px,1fr));gap:4px;margin-bottom:4px;align-items:stretch;min-width:1000px}
+.mes .nome{font:800 11px system-ui;color:#8fa1bd;text-align:right;padding-right:8px;letter-spacing:.5px;align-self:center}
+.dia{border-radius:7px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:monospace;cursor:pointer;transition:.12s;position:relative;min-height:40px;padding:2px;overflow:hidden}
+.dia:hover{transform:scale(1.1);z-index:10;box-shadow:0 6px 16px rgba(0,0,0,.7)}
+.dia.vazio{background:transparent;color:#2a3552;font-size:9px;cursor:default}
+.dia.vazio:hover{transform:none;box-shadow:none}
+.dia.sem{background:#1a2540;color:#5d6f8c}
+.dia.pos{background:linear-gradient(160deg,#0ecb81,#0a9e65);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
+.dia.neg{background:linear-gradient(160deg,#f6465d,#c93247);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.15)}
+.dia.meio-pos{background:linear-gradient(160deg,#ffd166,#f0b90b);color:#06111e}
+.dia.meio-neg{background:linear-gradient(160deg,#ff9f43,#e67e22);color:#06111e}
+.dia.zero{background:#26344d;color:#8fa1bd}
+.dia.feriado{background:repeating-linear-gradient(45deg,#1a2540,#1a2540 4px,#131c33 4px,#131c33 8px);color:#5d6f8c}
+.dia .n{font-size:11px;line-height:1;font-weight:900;margin-bottom:2px}
+.dia .r{font-size:11px;line-height:1;font-weight:900;letter-spacing:-.5px}
+.dia .multi{position:absolute;top:1px;right:2px;font:900 7px system-ui;background:rgba(0,0,0,.65);padding:1px 3px;border-radius:3px;color:#fff}
+.legend{display:flex;gap:14px;margin-top:16px;flex-wrap:wrap;font:700 11px system-ui;color:#8fa1bd;align-items:center}
+.legend .item{display:flex;gap:6px;align-items:center}
+.legend .sw{width:14px;height:14px;border-radius:4px;display:inline-block}
+.tooltip{position:fixed;background:#000;border:1.5px solid #6cb8ff;border-radius:9px;padding:8px 12px;font:700 11px system-ui;color:#e6edf7;pointer-events:none;z-index:9999;display:none;box-shadow:0 8px 24px rgba(0,0,0,.7);max-width:280px}
+.tooltip b{color:#ffd166}
+.tooltip .linha{margin:2px 0;display:flex;justify-content:space-between;gap:10px}
+.tooltip .linha span:last-child{color:#56e39f;font-family:monospace}
+.tooltip .linha.neg span:last-child{color:#ff7084}
+.tooltip .topo{color:#6cb8ff;margin-bottom:6px;font-size:12px}
+.tooltip .rodape{border-top:1px solid #26344d;padding-top:4px;margin-top:4px}
+</style>
 </head>
-
 <body>
-  <h1>
-    <span class="bolinha-titulo" aria-hidden="true"></span>
-    Salas ao Vivo — Day Trade
-  </h1>
 
-  <main class="container-externo">
-    <!-- CARD 1 -->
-    <section class="card" aria-label="Sheriffao.Trader — Day Trade">
-      <div class="player-wrap">
-        <iframe 
-          class="youtube-player"
-          src="https://www.youtube.com/embed/b-S_iToVtQo"
-          title="Sheriffao.Trader — Day Trade"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen
-        ></iframe>
-      </div>
-      <div class="nome-canal">
-        <div class="nome-esq">
-          <span class="bolinha vermelha" aria-hidden="true"></span>
-          <span>Sheriffao.Trader — Day Trade</span>
-        </div>
-        <span class="etiqueta-aovivo">AO VIVO</span>
-      </div>
-    </section>
+<h1>📅 Calendário Robôs · 2026</h1>
+<div class="sub">≥ +50 = verde · ≤ -100 = vermelho · valores intermediários aparecem reais</div>
 
-    <!-- CARD 2 -->
-    <section class="card" aria-label="Genial Investimentos — Sala ao Vivo">
-      <div class="player-wrap">
-        <iframe 
-          class="youtube-player"
-          src="https://www.youtube.com/embed/"
-          title="Genial Investimentos — Sala ao Vivo"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen
-        ></iframe>
-      </div>
-      <div class="nome-canal">
-        <div class="nome-esq">
-          <span class="bolinha azul" aria-hidden="true"></span>
-          <span>Genial Investimentos — Sala ao Vivo</span>
-        </div>
-        <span class="etiqueta-aovivo">AO VIVO</span>
-      </div>
-    </section>
-  </main>
+<div class="tabs" id="tabs"></div>
+<div class="resumo" id="resumo"></div>
+<div class="cal">
+  <div class="hdr-dias" id="hdr"></div>
+  <div id="meses"></div>
+</div>
 
+<div class="legend">
+  <div class="item"><span class="sw" style="background:#0ecb81"></span>+50 ou mais</div>
+  <div class="item"><span class="sw" style="background:#ffd166"></span>+1 a +49</div>
+  <div class="item"><span class="sw" style="background:#ff9f43"></span>-1 a -99</div>
+  <div class="item"><span class="sw" style="background:#f6465d"></span>-100 ou menos</div>
+  <div class="item"><span class="sw" style="background:#1a2540"></span>Sem entrada</div>
+  <div class="item"><span class="sw" style="background:repeating-linear-gradient(45deg,#1a2540,#1a2540 4px,#131c33 4px,#131c33 8px)"></span>Feriado</div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+function carregarDados(){
+  try{
+    var s=localStorage.getItem('caca_calendario');
+    if(s){
+      var d=JSON.parse(s);
+      if(d&&d.dias)return converterFormato(d);
+    }
+  }catch(e){}
+  return demo();
+}
+function converterFormato(antigo){
+  var out={robos:{}};
+  Object.keys(antigo.dias).forEach(function(dia){
+    var d=antigo.dias[dia];if(!d.robos)return;
+    Object.keys(d.robos).forEach(function(nome){
+      if(!out.robos[nome])out.robos[nome]={dias:{}};
+      out.robos[nome].dias[dia]={
+        resultado:d.robos[nome].resultado,
+        direcao:1,
+        duracao:Math.floor(Math.random()*1800)+600,
+        ops:d.robos[nome].ops||1
+      };
+    });
+  });
+  return out;
+}
+function demo(){
+  var robos=['bolinha','vela','supervisora','trade'];
+  var out={robos:{}};
+  robos.forEach(function(r){
+    out.robos[r]={dias:{}};
+    var seed=r.length*17;
+    for(var m=0;m<10;m++){
+      for(var d=1;d<=28;d++){
+        var dia=iso(2026,m+1,d);
+        seed=(seed*9301+49297)%233280;
+        var rnd=seed/233280;
+        if(rnd<0.15)continue;
+        if(rnd<0.30)continue; /* feriado */
+        var val;
+        if(rnd<0.55)val=50;
+        else if(rnd<0.65)val=Math.floor(rnd*50)+5;
+        else if(rnd<0.75)val=-(Math.floor(rnd*90)+5);
+        else if(rnd<0.95)val=-100;
+        else val=0;
+        out.robos[r].dias[dia]={resultado:val,direcao:val>0?1:-1,duracao:Math.floor(rnd*2000)+600,ops:1};
+      }
+    }
+  });
+  return out;
+}
+function iso(ano,mes,dia){return ano+'-'+String(mes).padStart(2,'0')+'-'+String(dia).padStart(2,'0')}
+
+var DADOS=carregarDados();
+var roboAtivo='todos';
+var MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+var DIAS_SEM=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+var DIAS_MES=[31,28,31,30,31,30,31,31,30,31,30,31];
+
+function feriado(isoStr){
+  var f=['2026-01-01','2026-04-21','2026-05-01','2026-09-07','2026-10-12','2026-11-02','2026-11-15','2026-11-20','2026-12-25'];
+  return f.indexOf(isoStr)>=0
+}
+function diaSem(isoStr){var p=isoStr.split('-');var d=new Date(+p[0],+p[1]-1,+p[2]);return DIAS_SEM[d.getDay()]}
+
+function render(){renderTabs();renderResumo();renderHdr();renderMeses()}
+
+function renderTabs(){
+  var t=document.getElementById('tabs');
+  var h='<button class="tab '+(roboAtivo==='todos'?'on':'')+'" data-r="todos">Todos</button>';
+  Object.keys(DADOS.robos).forEach(function(r){h+='<button class="tab '+(roboAtivo===r?'on':'')+'" data-r="'+r+'">'+r+'</button>'});
+  t.innerHTML=h;
+  t.querySelectorAll('.tab').forEach(function(b){b.onclick=function(){roboAtivo=b.getAttribute('data-r');render()}});
+}
+
+function stats(){
+  var robos=roboAtivo==='todos'?Object.keys(DADOS.robos):[roboAtivo];
+  var ops=0,pnl=0,v=0,r=0;
+  robos.forEach(function(n){
+    var d=DADOS.robos[n].dias;
+    Object.keys(d).forEach(function(dia){
+      if(dia.indexOf('2026-')!==0)return;
+      var x=d[dia].resultado;
+      if(x!==0){ops++;pnl+=x;if(x>0)v++;else r++}
+    });
+  });
+  return{ops:ops,pnl:pnl,v:v,r:r,wr:ops?Math.round(v/ops*100):0};
+}
+function renderResumo(){
+  var s=stats();
+  document.getElementById('resumo').innerHTML=
+    '<div class="card"><div class="l">RESULTADO TOTAL</div><div class="v '+(s.pnl>0?'pos':s.pnl<0?'neg':'emp')+'">'+(s.pnl>=0?'+':'')+'R$ '+Math.abs(s.pnl).toLocaleString('pt-BR')+'</div></div>'+
+    '<div class="card"><div class="l">OPERAÇÕES</div><div class="v">'+s.ops+'</div></div>'+
+    '<div class="card"><div class="l">VERDES 🟢</div><div class="v pos">'+s.v+'</div></div>'+
+    '<div class="card"><div class="l">VERMELHOS 🔴</div><div class="v neg">'+s.r+'</div></div>'+
+    '<div class="card"><div class="l">TAXA ACERTO</div><div class="v '+(s.wr>=55?'pos':s.wr<45?'neg':'emp')+'">'+s.wr+'%</div></div>';
+}
+function renderHdr(){
+  var h='<div></div>';
+  for(var d=1;d<=31;d++)h+='<div class="h">'+d+'</div>';
+  document.getElementById('hdr').innerHTML=h;
+}
+function renderMeses(){
+  var h='';
+  for(var m=1;m<=12;m++){
+    h+='<div class="mes"><div class="nome">'+MESES[m-1]+'</div>';
+    var tot=DIAS_MES[m-1];
+    for(var d=1;d<=31;d++){
+      if(d>tot){h+='<div class="dia vazio"></div>';continue}
+      h+=celula(iso(2026,m,d));
+    }
+    h+='</div>';
+  }
+  document.getElementById('meses').innerHTML=h;
+  document.querySelectorAll('.dia[data-tip]').forEach(function(el){
+    el.onmouseenter=function(e){var t=document.getElementById('tooltip');t.innerHTML=el.getAttribute('data-tip');t.style.display='block';mov(e)};
+    el.onmousemove=mov;
+    el.onmouseleave=function(){document.getElementById('tooltip').style.display='none'};
+  });
+}
+function mov(e){
+  var t=document.getElementById('tooltip');
+  t.style.left=Math.min(window.innerWidth-300,e.clientX+14)+'px';
+  t.style.top=Math.min(window.innerHeight-140,e.clientY+14)+'px';
+}
+function agrega(isoStr){
+  var robos=roboAtivo==='todos'?Object.keys(DADOS.robos):[roboAtivo];
+  var lista=[];
+  robos.forEach(function(r){
+    var d=DADOS.robos[r].dias[isoStr];
+    if(d)lista.push({robo:r,resultado:d.resultado,direcao:d.direcao,duracao:d.duracao,ops:d.ops||1});
+  });
+  if(!lista.length)return null;
+  var soma=0;lista.forEach(function(x){soma+=x.resultado});
+  return{lista:lista,total:soma,qtd:lista.length};
+}
+function celula(isoStr){
+  var f=feriado(isoStr);
+  var data=agrega(isoStr);
+  var cls=['dia'];
+  var conteudo='';
+  var tip='';
+  var p=isoStr.split('-');
+  var diaN=parseInt(p[2]);
+
+  if(f&&!data){
+    cls.push('feriado');
+    conteudo='<div class="n">'+diaN+'</div>';
+  } else if(!data){
+    cls.push('sem');
+    conteudo='<div class="n">'+diaN+'</div>';
+  } else {
+    var t=data.total;
+    var mostra;
+    if(t>=50){cls.push('pos');mostra='+50'}
+    else if(t<=-100){cls.push('neg');mostra='-100'}
+    else if(t>0){cls.push('meio-pos');mostra='+'+t}
+    else if(t<0){cls.push('meio-neg');mostra=t}
+    else{cls.push('zero');mostra='0'}
+
+    conteudo='<div class="n">'+diaN+'</div><div class="r">'+mostra+'</div>';
+    if(data.qtd>1)conteudo+='<div class="multi">×'+data.qtd+'</div>';
+
+    tip='<div class="topo"><b>'+diaSem(isoStr)+' '+p[2]+'/'+p[1]+'/'+p[0]+'</b></div>';
+    data.lista.forEach(function(it){
+      var dir=it.direcao>0?'Compra':'Venda';
+      var dur=Math.floor((it.duracao||600)/60)+'min';
+      var v=it.resultado;
+      var emoji=v>=50?'🟢':v<=-100?'🔴':v>0?'🟡':v<0?'🟠':'⚪';
+      var neg=v<0?'neg':'';
+      tip+='<div class="linha '+neg+'"><span><b>'+it.robo+'</b> · '+dir+'</span><span>'+emoji+' '+(v>=0?'+':'-')+'R$ '+Math.abs(v)+'</span></div>';
+      tip+='<div style="font-size:9px;color:#8fa1bd;margin-bottom:4px">dur: '+dur+'</div>';
+    });
+    tip+='<div class="linha rodape"><span><b>Total do dia</b></span><span style="color:'+(t>=0?'#56e39f':'#ff7084')+'">'+(t>=0?'+':'-')+'R$ '+Math.abs(t)+'</span></div>';
+  }
+
+  return '<div class="'+cls.join(' ')+'" data-tip="'+tip.replace(/"/g,'&quot;')+'">'+conteudo+'</div>';
+}
+
+window.addEventListener('storage',function(e){if(e.key==='caca_calendario'){DADOS=carregarDados();render()}});
+setInterval(function(){
+  var a=localStorage.getItem('caca_calendario');
+  if(a&&a!==window._last){window._last=a;DADOS=carregarDados();render()}
+},5000);
+try{window._last=localStorage.getItem('caca_calendario')}catch(e){}
+
+render();
+console.log('[CALENDARIO] pronto ·',Object.keys(DADOS.robos).length,'robôs');
+</script>
 </body>
 </html>
