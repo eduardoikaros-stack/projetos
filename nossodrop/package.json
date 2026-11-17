@@ -1,0 +1,19 @@
+{
+  "name": "nossodrop",
+  "version": "1.0.0",
+  "description": "NossoDrop — compartilhe arquivos e textos entre dispositivos, direto do navegador (P2P via WebRTC, estilo PairDrop/AirDrop)",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "ws": "^8.17.1"
+  },
+  "license": "MIT"
+}
