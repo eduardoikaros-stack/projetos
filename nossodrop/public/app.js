@@ -14,13 +14,11 @@ const els = {
   fileInput: $('fileInput'), dropOverlay: $('dropOverlay'), toasts: $('toasts'),
   openRoomBtn: $('openRoomBtn'), roomModal: $('roomModal'),
   myName: $('myName'), saveName: $('saveName'), deviceInfo: $('deviceInfo'),
-  roomNetwork: $('roomNetwork'), roomActive: $('roomActive'),
+  roomActiveBar: $('roomActiveBar'),
   createRoom: $('createRoom'), joinCode: $('joinCode'), joinRoom: $('joinRoom'),
-  roomCodeLabel: $('roomCodeLabel'), copyCode: $('copyCode'), copyLink: $('copyLink'),
-  leaveRoom: $('leaveRoom'), qrBox: $('qrBox'),
+  roomCodeLabel: $('roomCodeLabel'), copyLink: $('copyLink'),
+  leaveRoom: $('leaveRoom'),
   directBar: $('directBar'),
-  directCodeLabel: $('directCodeLabel'), copyDirectCode: $('copyDirectCode'),
-  directCodeInput: $('directCodeInput'), connectDirect: $('connectDirect'),
 };
 
 /* ---------------- utilidades ---------------- */
@@ -236,7 +234,7 @@ function renderPeers() {
     s.className = 'peer-chip muted';
     s.textContent = 'Aguardando…';
     els.peersBar.appendChild(s);
-    els.emptyHint.textContent = 'Seu código está aqui em cima — a outra pessoa digita ele no aparelho dela.';
+    els.emptyHint.textContent = 'Na mesma rede o outro aparelho aparece sozinho. De longe: Criar sala aqui em cima e passe o código.';
     return;
   }
   els.emptyHint.textContent = '';
@@ -258,14 +256,13 @@ els.roomModal.addEventListener('click', (e) => { if (e.target === els.roomModal)
 function roomLink() { return `${location.origin}${location.pathname}?room=${roomCode}`; }
 function renderRoom() {
   const active = !!roomCode;
-  els.roomNetwork.classList.toggle('hidden', active);
-  els.roomActive.classList.toggle('hidden', !active);
+  els.createRoom.classList.toggle('hidden', active);
+  els.joinCode.classList.toggle('hidden', active);
+  els.joinRoom.classList.toggle('hidden', active);
+  els.roomActiveBar.classList.toggle('hidden', !active);
   if (active) {
     els.roomCodeLabel.textContent = roomCode;
     history.replaceState(null, '', `?room=${roomCode}`);
-    els.qrBox.innerHTML = '';
-    const make = () => { if (window.QRCode) new window.QRCode(els.qrBox, { text: roomLink(), width: 150, height: 150 }); };
-    window.QRCode ? make() : setTimeout(make, 700);
   } else {
     history.replaceState(null, '', location.pathname);
   }
@@ -282,7 +279,6 @@ els.joinRoom.onclick = () => {
 };
 els.joinCode.addEventListener('keydown', (e) => { if (e.key === 'Enter') els.joinRoom.click(); });
 els.leaveRoom.onclick = () => sendWs({ type: 'leave-room' });
-els.copyCode.onclick = () => copyText(roomCode, 'Código copiado!');
 els.copyLink.onclick = () => copyText(roomLink(), 'Link copiado!');
 function saveMyName() {
   const name = els.myName.value.trim();
@@ -364,7 +360,6 @@ function setupChannel(peerId, channel) {
 }
 const sendQueues = new Map();       // fila de envios por aparelho (qualquer transporte)
 const incomingByPeer = new Map();   // arquivo sendo recebido, por aparelho
-const directConns = new Map();      // ligações diretas (PeerJS), por aparelho
 
 function enqueue(peerId, task) {
   const prev = sendQueues.get(peerId) || Promise.resolve();
@@ -375,10 +370,6 @@ function enqueue(peerId, task) {
 
 /* Transporte unificado: ligação direta (PeerJS) ou rede local (nosso servidor) */
 async function getTransport(peerId) {
-  const dc = directConns.get(peerId);
-  if (dc?.open) {
-    return { send: (d) => dc.send(d), bufferedAmount: 0, direct: true, isOpen: () => dc.open };
-  }
   const channel = await ensureChannel(peerId);
   return {
     send: (d) => channel.send(d),
@@ -414,8 +405,6 @@ async function sendOneFile(peerId, file, card) {
     transport.send(buf);
     offset += buf.byteLength;
     bubbleProgress(card, offset, file.size, started);
-    // na ligação direta, respira a cada ~1 MB para não entupir a central
-    if (transport.direct && offset % (CHUNK * 16) === 0) await new Promise((r) => setTimeout(r, 25));
   }
   transport.send(JSON.stringify({ type: 'file-complete', transferId }));
   bubbleDone(card, offset, started);
@@ -520,78 +509,6 @@ window.addEventListener('drop', (e) => {
   }
   sendFiles(files);
 });
-
-/* ---------------- ligação direta por código (PeerJS) ----------------
-   Funciona em qualquer hospedagem (inclusive GitHub Pages): a central
-   pública do PeerJS só faz a apresentação; depois é direto aparelho↔aparelho. */
-const DIRECT_PREFIX = 'nossodrop1-';
-let directPeer = null;
-let directCode = localStorage.getItem('nossodrop-direct-code') || '';
-if (!directCode) {
-  const alfabeto = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-  directCode = Array.from({ length: 6 }, () => alfabeto[Math.floor(Math.random() * alfabeto.length)]).join('');
-  localStorage.setItem('nossodrop-direct-code', directCode);
-}
-if (els.directCodeLabel) els.directCodeLabel.textContent = directCode;
-
-function setupDirectConn(conn) {
-  directConns.set(conn.peer, conn);
-  conn.on('open', () => {
-    const name = conn.metadata?.name || `Aparelho ${conn.peer.replace(DIRECT_PREFIX, '')}`;
-    const device = conn.metadata?.device || '🔗 Direto';
-    peers.set(conn.peer, { id: conn.peer, name, device, via: 'direct' });
-    if (!selectedPeerId) selectedPeerId = conn.peer;
-    renderPeers();
-    addSystem(`${name} conectou direto 🔗`);
-  });
-  conn.on('data', (data) => handleChannelMessage(conn.peer, data));
-  const sair = () => {
-    const peer = peers.get(conn.peer);
-    directConns.delete(conn.peer);
-    if (!directConns.has(conn.peer) || peers.get(conn.peer)) {
-      // só remove da lista se não estiver também na rede local
-      if (peer && !connections.has(conn.peer)) peers.delete(conn.peer);
-    }
-    if (selectedPeerId === conn.peer) selectedPeerId = null;
-    renderPeers();
-    if (peer) addSystem(`${peer.name} desconectou`);
-  };
-  conn.on('close', sair);
-  conn.on('error', sair);
-}
-
-function initDirect(tentativas = 0) {
-  if (!window.Peer) {
-    if (tentativas < 20) setTimeout(() => initDirect(tentativas + 1), 500);
-    return;
-  }
-  directPeer = new window.Peer(DIRECT_PREFIX + directCode, { debug: 0 });
-  directPeer.on('open', () => { if (els.directCodeLabel) els.directCodeLabel.textContent = directCode; });
-  directPeer.on('connection', (conn) => setupDirectConn(conn));
-  directPeer.on('error', (err) => {
-    if (err.type === 'peer-unavailable') toast('Não achei esse código. A outra pessoa está com a página aberta? 🤔', true, 6000);
-    else if (err.type === 'unavailable-id') toast('Esse código já está em uso em outra aba.', true);
-    else if (err.type === 'network' || err.type === 'server-error') toast('Ligação direta indisponível agora (central fora do ar). Tente a sala/rede local.', true, 6000);
-  });
-  directPeer.on('disconnected', () => { try { directPeer.reconnect(); } catch { /* noop */ } });
-}
-
-function connectDirect() {
-  const code = els.directCodeInput.value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-  if (!code) return toast('Digite o código do outro aparelho primeiro.', true);
-  if (code === directCode) return toast('Esse é o SEU código 😅 — digite o do outro aparelho.', true);
-  if (!directPeer) return toast('Ligação direta ainda carregando… tente de novo em 2 segundos.', true);
-  toast(`Conectando em ${code}…`);
-  const conn = directPeer.connect(DIRECT_PREFIX + code, {
-    reliable: true,
-    metadata: { name: myName, device: myDevice.label },
-  });
-  setupDirectConn(conn);
-}
-if (els.connectDirect) els.connectDirect.onclick = connectDirect;
-if (els.directCodeInput) els.directCodeInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') connectDirect(); });
-if (els.copyDirectCode) els.copyDirectCode.onclick = () => copyText(directCode, 'Seu código copiado!');
-initDirect();
 
 /* ---------------- início ---------------- */
 if (myName) els.myName.value = myName;

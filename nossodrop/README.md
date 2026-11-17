@@ -61,10 +61,11 @@ Descoberta na rede local: o servidor agrupa conexões pelo hash do IP público (
 - **Só olhar a página:** pelo GitHub Pages do repositório (após juntar o branch na `main`).
   No Pages é só visualização — o envio precisa do servidor rodando (item acima).
 
-## Ligação direta (sem servidor) 🔗
+## Sala com código (só nosso servidor) 🔗
 
-No botão 🔗 da página: cada aparelho tem um **código** (ex.: `K7P2QX`).
-Digite o código do outro aparelho e clique **Conectar** — a conexão é feita
-via central pública do PeerJS só para a apresentação; depois os dados vão
-**direto aparelho↔aparelho** (nada fica guardado). Esse modo funciona até
-hospedado em site estático, como o GitHub Pages.
+Quem apresenta os aparelhos é **apenas o nosso `server.js`** (nada de
+PeerJS ou central de terceiros). Na página: **Criar sala** gera um código,
+o outro aparelho digita e conecta. Na mesma rede nem precisa de código.
+Os dados vão **direto aparelho↔aparelho**; o servidor só apresenta.
+(Para atravessar redes diferentes, os navegadores usam STUN público —
+um serviço padrão de "descoberta de caminho", que não vê os arquivos.)
