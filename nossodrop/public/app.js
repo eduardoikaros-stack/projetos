@@ -92,23 +92,11 @@ function addTextBubble(direction, text, peerName) {
   body.textContent = text;
   const meta = document.createElement('span');
   meta.className = 'meta';
-  meta.textContent = direction === 'up'
-    ? `${peerName ? 'para ' + peerName + ' · ' : ''}${nowTime()} ✓`
-    : `${peerName ? peerName + ' · ' : ''}${nowTime()}`;
+  meta.textContent = nowTime();
   b.append(body, meta);
-
-  if (/^https?:\/\/\S+$/i.test(text.trim())) {
-    body.style.textDecoration = 'underline';
-    body.style.cursor = 'pointer';
-    body.title = 'Abrir link';
-    body.onclick = () => window.open(text.trim(), '_blank', 'noopener');
-  }
-  const copy = document.createElement('button');
-  copy.className = 'copy-btn';
-  copy.textContent = 'Copiar';
-  copy.onclick = () => copyText(text, 'Copiado!');
-  b.appendChild(document.createElement('br'));
-  b.appendChild(copy);
+  b.title = 'Toque para copiar';
+  b.style.cursor = 'pointer';
+  b.onclick = () => copyText(text, 'Copiado!');
 
   els.chat.appendChild(b);
   scrollDown();
@@ -206,7 +194,7 @@ function connect() {
         peers.set(msg.peer.id, msg.peer);
         if (!selectedPeerId) selectedPeerId = msg.peer.id;
         renderPeers();
-        addSystem(`👋 ${msg.peer.name} entrou — já pode arrastar arquivos ou digitar aqui embaixo`);
+        addSystem(`${msg.peer.name} entrou`);
         break;
       case 'peer-updated':
         peers.set(msg.peer.id, msg.peer);
@@ -243,7 +231,7 @@ function renderPeers() {
   if (!peers.size) {
     const s = document.createElement('span');
     s.className = 'peer-chip muted';
-    s.textContent = '⏳ Aguardando aparelho…';
+    s.textContent = 'Aguardando…';
     els.peersBar.appendChild(s);
     els.emptyHint.textContent = 'Abra esta página em outro aparelho (mesma Wi-Fi) — ou toque em 🔗 e use uma sala.';
     return;

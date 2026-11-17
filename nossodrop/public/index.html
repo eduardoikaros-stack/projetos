@@ -23,7 +23,7 @@
       <div class="brand">🪂 <strong>NossoDrop</strong></div>
       <div class="top-right">
         <div id="peersBar" class="peers-bar">
-          <span class="peer-chip muted" id="waitingChip">⏳ Aguardando aparelho…</span>
+          <span class="peer-chip muted" id="waitingChip">Aguardando…</span>
         </div>
         <span id="connDot" class="dot dot-off" title="Conexão"></span>
         <button id="openRoomBtn" class="btn-icon" title="Conectar outro aparelho / sala">🔗</button>
@@ -32,17 +32,15 @@
 
     <main id="chat" class="chat">
       <div id="emptyState" class="empty">
-        <div class="empty-icon">📥</div>
-        <h1>Arraste arquivos para cá</h1>
-        <p>ou digite uma mensagem aqui embaixo e envie.<br />É como um chat — rápido e direto.</p>
-        <p class="empty-hint" id="emptyHint">Abra esta página em outro aparelho para conectar.</p>
+        <p>Arraste arquivos ou digite abaixo</p>
+        <p class="empty-hint" id="emptyHint"></p>
       </div>
       <!-- mensagens e arquivos aparecem aqui -->
     </main>
 
     <footer class="composer">
       <button id="attachBtn" class="btn-circle" title="Enviar arquivo">＋</button>
-      <textarea id="composerInput" rows="1" placeholder="Digite uma mensagem…"></textarea>
+      <textarea id="composerInput" rows="1" placeholder="Mensagem…"></textarea>
       <button id="sendBtn" class="btn-send" title="Enviar">➤</button>
     </footer>
   </div>
