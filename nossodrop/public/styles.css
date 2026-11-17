@@ -168,7 +168,9 @@ input[type="text"]:focus { border-color: var(--brand); }
   width: 32px; height: 32px; border-radius: 50%;
   border: 1px solid var(--border); background: #fff; color: var(--muted); cursor: pointer;
 }
-.direct-box { border: 1px solid var(--border); border-radius: 12px; padding: 14px; background: #f8f9ff; }
+.direct-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#eef2ff;border-bottom:1px solid #dbe2ff;padding:9px 14px}
+.direct-bar input{flex:1;min-width:130px;text-transform:uppercase;letter-spacing:2px;font-weight:700;border:1px solid #c7d0fe;border-radius:10px;padding:9px 12px;font:inherit;font-size:14px;outline:none;background:#fff}
+.direct-meu{font-size:13.5px;color:#3730a3;white-space:nowrap}
 .direct-code { letter-spacing: 3px; font-size: 18px; color: var(--brand); }
 .code-box {
   margin-top: 10px; text-align: center;
