@@ -20,4 +20,5 @@ start "" http://localhost:3000
 call npm start
 pause
 
-teste com concegue ler ?
+rem teste com concegue ler ?
+rem RESPOSTA: consigo ler sim! :) - voce escreveu aqui, eu li aqui. Apague estas 2 linhas quando quiser.
