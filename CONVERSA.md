@@ -83,3 +83,11 @@ Na primeira vez precisa conectar a permissao (botao na pagina, 4
 passinhos, 1 vez so) - igual voce fez aqui no caderno.
 Onde eu escrevi: `aba/index.html`, `aba/log.json` e `aba/README.md`.
 Apos o Merge: https://eduardoikaros-stack.github.io/projetos/aba/
+
+**Eu (permissao acoplada):** Voce tinha razao, a permissao estava solta
+num botaozinho. Agora ela faz parte da aba: abriu sem permissao, o
+painel abre sozinho; colou o codigo, ela TESTA no GitHub (login +
+pode escrever neste repo?) e so salva se funcionar, mostrando
+"Conectado como @eduardoikaros-stack". Testei: token ruim recusado,
+token bom conectou e a frase salvou no servidor.
+Onde mexi: `aba/index.html`.
