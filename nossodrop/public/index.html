@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>NossoDrop</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪂</text></svg>" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Soltar arquivo -->
+  <div id="dropOverlay" class="drop-overlay" aria-hidden="true">
+    <div class="drop-box">
+      <div class="drop-icon">📥</div>
+      <p>Solte para enviar</p>
+    </div>
+  </div>
+
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">🪂 <strong>NossoDrop</strong></div>
+      <div class="top-right">
+        <div id="peersBar" class="peers-bar">
+          <span class="peer-chip muted" id="waitingChip">Aguardando…</span>
+        </div>
+        <span id="connDot" class="dot dot-off" title="Conexão"></span>
+        <button id="openRoomBtn" class="btn-icon" title="Conectar outro aparelho / sala">🔗</button>
+      </div>
+    </header>
+
+    <main id="chat" class="chat">
+      <div id="emptyState" class="empty">
+        <p>Arraste arquivos ou digite abaixo</p>
+        <p class="empty-hint" id="emptyHint"></p>
+      </div>
+      <!-- mensagens e arquivos aparecem aqui -->
+    </main>
+
+    <footer class="composer">
+      <button id="attachBtn" class="btn-circle" title="Enviar arquivo">＋</button>
+      <textarea id="composerInput" rows="1" placeholder="Mensagem…"></textarea>
+      <button id="sendBtn" class="btn-send" title="Enviar">➤</button>
+    </footer>
+  </div>
+
+  <!-- MODAL: conectar / sala -->
+  <div id="roomModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal">
+      <button class="modal-close" data-close aria-label="Fechar">✕</button>
+      <h3>🔗 Conectar aparelho</h3>
+      <p class="muted">Na mesma Wi-Fi, basta abrir esta página no outro aparelho — ele aparece sozinho aqui no topo. Para longe, use uma sala:</p>
+
+      <div class="direct-box">
+        <label class="label" style="margin-top:0">🔗 Ligação direta (sem servidor)</label>
+        <p class="muted">Seu código: <strong id="directCodeLabel" class="direct-code">…</strong>
+          <button id="copyDirectCode" class="btn" type="button">Copiar</button></p>
+        <p class="muted small">A outra pessoa digita o seu código aqui embaixo no aparelho dela — ou você digita o dela:</p>
+        <div class="row">
+          <input id="directCodeInput" type="text" placeholder="Código do outro. Ex.: K7P2QX" maxlength="12" autocomplete="off" />
+          <button id="connectDirect" class="btn btn-primary" type="button">Conectar</button>
+        </div>
+      </div>
+
+      <label class="label">Seu nome</label>
+      <div class="row">
+        <input id="myName" type="text" maxlength="40" placeholder="Seu nome" autocomplete="off" />
+        <button id="saveName" class="btn">Salvar</button>
+      </div>
+      <p class="muted small" id="deviceInfo"></p>
+
+      <div id="roomNetwork">
+        <div class="row">
+          <button id="createRoom" class="btn btn-primary">Criar sala</button>
+        </div>
+        <div class="row">
+          <input id="joinCode" type="text" placeholder="Código. Ex.: K7P2QX" maxlength="12" autocomplete="off" />
+          <button id="joinRoom" class="btn">Entrar</button>
+        </div>
+      </div>
+
+      <div id="roomActive" class="hidden">
+        <p class="muted">Passe este código ou link para a outra pessoa:</p>
+        <div class="code-box">
+          <span id="roomCodeLabel">------</span>
+        </div>
+        <div class="row">
+          <button id="copyCode" class="btn">Copiar código</button>
+          <button id="copyLink" class="btn">Copiar link</button>
+        </div>
+        <div id="qrBox" class="qr-box"></div>
+        <button id="leaveRoom" class="btn btn-danger">Sair da sala</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="fileInput" multiple hidden />
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js" defer></script>
+  <script src="app.js"></script>
+</body>
+</html>
