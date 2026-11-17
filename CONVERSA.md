@@ -63,3 +63,9 @@ Pra valer no site, aceita esta nova juncao quando eu mandar o link.
 "foto antiga" (salvava e ela nao atualizava) e renomear o arquivo fazia
 ele perder a pasta. Corrigi: salvou, a pasta aberta se redesenha na hora,
 e o texto novo nasce dentro da pasta que esta aberta.
+
+**Eu (salvar texto):** Testei igual usuario: digitei, salvou, reabri e o
+texto estava la. O que faltava era salvar NO SERVIDOR igual aqui no
+caderno. Coloquei o botao "Salvar no GitHub" no Bloco de notas (abre o
+GitHub com o texto pronto, voce clica Commit e fica salvo de verdade),
+e uma reserva caso o navegador bloqueie o cofre local.

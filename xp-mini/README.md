@@ -49,3 +49,15 @@ indisponível, ele usa a cópia que veio junto com o site.
 
 O arquivo `.nojekyll` na raiz do repositório impede o GitHub Pages de
 "processar" o site (causa comum de 404 em subpastas).
+
+## Onde o texto fica salvo?
+
+- **Neste navegador** (automático enquanto digita): cofre do navegador
+  (IndexedDB) com **reserva** (localStorage) se o cofre estiver bloqueado.
+  Ao salvar, ele confere se gravou antes de mostrar "Salvo".
+- **No servidor (GitHub)** — igual ao nosso caderno: botão
+  **🐙 Salvar no GitHub** no Bloco de notas. Abre o GitHub já com o texto
+  preenchido em `xp-mini/textos/`; é só clicar **Commit changes**.
+  Depois, Atualizar no Explorador traz o texto de volta pra dentro.
+- **Num arquivo de verdade no aparelho**: ⬇ Baixar, ou 🔗 Conectar
+  arquivo (Chrome/Edge).
