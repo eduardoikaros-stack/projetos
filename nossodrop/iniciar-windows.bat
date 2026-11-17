@@ -19,3 +19,5 @@ echo  Abrindo o NossoDrop...
 start "" http://localhost:3000
 call npm start
 pause
+
+teste com concegue ler ?
