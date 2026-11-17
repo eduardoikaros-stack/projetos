@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aba Conectada — nós dois</title>
+<style>
+  *{box-sizing:border-box} body{margin:0;font-family:system-ui,Arial,sans-serif;background:#f6f7f9;color:#111827}
+  .app{max-width:760px;margin:0 auto;height:100dvh;display:flex;flex-direction:column}
+  header{background:#fff;border-bottom:1px solid #e5e7eb;padding:12px 16px;display:flex;align-items:center;gap:10px}
+  header b{font-size:18px} header span{color:#6b7280;font-size:13px}
+  #status{margin-left:auto;font-size:12.5px;color:#6b7280;text-align:right}
+  #status.ok{color:#15803d;font-weight:700} #status.erro{color:#b91c1c;font-weight:700}
+  main{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+  .msg{max-width:82%;padding:10px 14px;border-radius:16px;line-height:1.5;white-space:pre-wrap;word-break:break-word;background:#fff;border:1px solid #e5e7eb;align-self:flex-start}
+  .msg.eu{align-self:flex-end;background:#4f46e5;color:#fff;border-color:#4f46e5}
+  .msg small{display:block;font-size:11px;opacity:.65;margin-top:4px}
+  .vazio{margin:auto;text-align:center;color:#9ca3af;padding:20px}
+  footer{background:#fff;border-top:1px solid #e5e7eb;padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+  .linha{display:flex;gap:8px}
+  #nome{width:130px} input,textarea{border:1px solid #d1d5db;border-radius:12px;padding:11px 12px;font:inherit;font-size:15px;outline:none}
+  input:focus,textarea:focus{border-color:#4f46e5} textarea{flex:1;resize:none}
+  button{border:0;border-radius:12px;padding:11px 16px;font:inherit;font-weight:700;cursor:pointer;background:#4f46e5;color:#fff}
+  button.sec{background:#eef2ff;color:#3730a3} button:disabled{opacity:.55}
+  #perm{display:none;background:#fff7ed;border-bottom:1px solid #fed7aa;padding:12px 16px;font-size:14px;line-height:1.6}
+  #perm.open{display:block} #perm input{width:100%;margin:8px 0} #perm code{background:#ffedd5;padding:1px 5px;border-radius:4px}
+  a{color:#4f46e5;font-weight:700}
+  @media(max-width:560px){#nome{width:100px}.msg{max-width:90%}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <span style="font-size:22px">💬</span>
+    <div><b>Aba Conectada</b><br><span>você digita · eu digito · fica salvo no servidor</span></div>
+    <div id="status">carregando…</div>
+  </header>
+
+  <div id="perm">
+    <b>🔑 Conectar permissão (1 vez só)</b><br>
+    Pra página poder <b>salvar no servidor</b>, ela precisa da sua permissão:<br>
+    1) <a href="https://github.com/settings/personal-access-tokens/new?name=Aba%20Conectada&description=Salvar%20na%20aba%20conectada&target_name=eduardoikaros-stack&contents=write" target="_blank" rel="noopener">Toque aqui pra criar a permissão</a> (já vem quase pronta)<br>
+    2) Em <b>Repository access</b>, escolha <b>Only select repositories</b> → <b>projetos</b><br>
+    3) Lá embaixo, <b>Generate token</b> → copie o código (começa com <code>github_pat_</code>)<br>
+    4) Cole aqui e toque em Salvar permissão:<br>
+    <input id="token" type="password" placeholder="cole aqui o github_pat_..." autocomplete="off">
+    <button id="salvarToken" class="sec">Salvar permissão</button>
+    <button id="fecharPerm" class="sec">Fechar</button><br>
+    <small>A permissão fica guardada <b>só no seu navegador</b>, nunca vai pro site público. Sem ela, a aba só lê.</small>
+  </div>
+
+  <main id="log"><div class="vazio">Carregando nossa conversa do servidor…</div></main>
+
+  <footer>
+    <div class="linha" style="margin-bottom:8px">
+      <input id="nome" placeholder="Seu nome" autocomplete="name">
+      <button id="btnPerm" class="sec">🔑 Conectar permissão</button>
+    </div>
+    <div class="linha">
+      <textarea id="texto" rows="2" placeholder="Escreva aqui… (uma frase já salva!)"></textarea>
+      <button id="enviar">Enviar</button>
+    </div>
+  </footer>
+</div>
+
+<script>
+'use strict';
+// ---- onde fica salvo: UM arquivo no servidor (GitHub) ----
+const DONO='eduardoikaros-stack', REPO='projetos', RAMO='main', ARQUIVO='aba/log.json';
+const API='https://api.github.com/repos/'+DONO+'/'+REPO+'/contents/'+ARQUIVO;
+const $=id=>document.getElementById(id);
+const logEl=$('log'), statusEl=$('status'), nomeEl=$('nome'), textoEl=$('texto');
+let sha=null, mensagens=[], enviando=false;
+
+nomeEl.value=localStorage.getItem('aba-nome')||'Eduardo';
+const token=()=>localStorage.getItem('aba-token')||'';
+function cabecalhos(){const h={'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'};if(token())h['Authorization']='Bearer '+token();return h}
+const enc=t=>btoa(unescape(encodeURIComponent(t)));
+const dec=b=>decodeURIComponent(escape(atob(String(b||'').replace(/\s/g,''))));
+function status(txt,cls){statusEl.textContent=txt;statusEl.className=cls||''}
+function hora(iso){try{return new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}catch{return''}}
+function desenhar(){
+  logEl.innerHTML=mensagens.length?'':'<div class="vazio">Nada aqui ainda. Escreva a primeira frase!</div>';
+  for(const m of mensagens){
+    const d=document.createElement('div');
+    d.className='msg'+(m.quem===nomeEl.value.trim()?' eu':'');
+    d.textContent=m.texto;
+    const s=document.createElement('small'); s.textContent=m.quem+' · '+hora(m.quando);
+    d.appendChild(s); logEl.appendChild(d);
+  }
+  logEl.scrollTop=logEl.scrollHeight;
+}
+async function carregar(){
+  try{
+    const r=await fetch(API+'?ref='+RAMO+'&t='+Date.now(),{headers:cabecalhos(),cache:'no-store'});
+    if(r.status===404){mensagens=[];sha=null;desenhar();status('pronto (começando agora)','ok');return}
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json(); sha=j.sha;
+    mensagens=(JSON.parse(dec(j.content)).mensagens||[]);
+    desenhar(); status('conectado no servidor ✓','ok');
+  }catch(e){ console.error(e); status('sem conexão com o servidor','erro'); }
+}
+async function enviar(){
+  const texto=textoEl.value.trim(), quem=nomeEl.value.trim()||'Eduardo';
+  if(!texto||enviando)return;
+  if(!token()){ $('perm').classList.add('open'); status('falta a permissão pra salvar','erro'); textoEl.focus(); return; }
+  enviando=true; $('enviar').disabled=true; status('salvando no servidor…');
+  localStorage.setItem('aba-nome',quem);
+  try{
+    // rele o arquivo antes de salvar, pra nunca apagar mensagem nova do outro lado
+    const r=await fetch(API+'?ref='+RAMO+'&t='+Date.now(),{headers:cabecalhos(),cache:'no-store'});
+    if(r.ok){const j=await r.json(); sha=j.sha; mensagens=(JSON.parse(dec(j.content)).mensagens||[]);}
+    else if(r.status!==404)throw new Error('HTTP '+r.status);
+    mensagens.push({id:'m'+Date.now(),quem,texto,quando:new Date().toISOString()});
+    const corpo={message:'Aba Conectada: '+quem,branch:RAMO,content:enc(JSON.stringify({mensagens},null,2))};
+    if(sha)corpo.sha=sha;
+    const put=await fetch(API,{method:'PUT',headers:{...cabecalhos(),'Content-Type':'application/json'},body:JSON.stringify(corpo)});
+    if(put.status===401||put.status===403){$('perm').classList.add('open');throw new Error('permissão recusada ('+put.status+') — crie/cole a permissão de novo')}
+    if(!put.ok)throw new Error('HTTP '+put.status);
+    sha=(await put.json()).content.sha;
+    textoEl.value=''; desenhar(); status('salvo no servidor ✓ '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),'ok');
+  }catch(e){ console.error(e); status('NÃO salvou: '+e.message,'erro'); }
+  enviando=false; $('enviar').disabled=false;
+}
+$('enviar').onclick=enviar;
+textoEl.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviar()}});
+nomeEl.addEventListener('change',()=>localStorage.setItem('aba-nome',nomeEl.value.trim()));
+$('btnPerm').onclick=()=>$('perm').classList.toggle('open');
+$('fecharPerm').onclick=()=>$('perm').classList.remove('open');
+$('salvarToken').onclick=()=>{const t=$('token').value.trim();if(!t)return;localStorage.setItem('aba-token',t);$('token').value='';$('perm').classList.remove('open');status('permissão salva — pode enviar!','ok');carregar()};
+carregar();
+setInterval(()=>{if(document.visibilityState==='visible'&&!enviando)carregar()},20000);
+</script>
+</body>
+</html>

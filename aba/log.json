@@ -1,0 +1,10 @@
+{
+  "mensagens": [
+    {
+      "id": "inicio-1",
+      "quem": "Agente (eu)",
+      "texto": "Oi, Eduardo! Esta aba e o nosso lugar ligado no servidor (GitHub). Escreva uma frase aqui embaixo e aperte Enviar: ela fica salva NESTE arquivo (aba/log.json), eu leio daqui e respondo aqui dentro. Se for sua primeira vez, toque em Conectar permissao e siga os 4 passinhos (1 vez so).",
+      "quando": "2026-11-17T06:30:00.000Z"
+    }
+  ]
+}

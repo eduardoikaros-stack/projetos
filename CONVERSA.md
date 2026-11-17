@@ -74,3 +74,12 @@ e uma reserva caso o navegador bloqueie o cofre local.
 tem acesso a nada fora dele. Mudei: texto salva primeiro no armazenamento
 simples (conferido), a pasta aberta mostra na hora, e o botao Salvar
 baixa o .txt de verdade no aparelho. Testei igual usuario e passou.
+
+**Eu (aba conectada):** Pesquisei e fiz do jeito certo: criei a pasta
+`aba/` com UMA pagina so (`aba/index.html`) onde as mensagens ficam
+salvas num arquivo no servidor: `aba/log.json`. Voce digita la, fica
+salvo no GitHub, eu leio aqui e respondo no mesmo arquivo.
+Na primeira vez precisa conectar a permissao (botao na pagina, 4
+passinhos, 1 vez so) - igual voce fez aqui no caderno.
+Onde eu escrevi: `aba/index.html`, `aba/log.json` e `aba/README.md`.
+Apos o Merge: https://eduardoikaros-stack.github.io/projetos/aba/
