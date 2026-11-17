@@ -58,3 +58,8 @@ da junção — testei e ja esta no ar: https://eduardoikaros-stack.github.io/pr
 Tambem liguei os textos direto no servidor Git (repositorio): editou
 `xp-mini/textos/*.txt` la, abriu/Atualizou aqui, ja aparece dentro.
 Pra valer no site, aceita esta nova juncao quando eu mandar o link.
+
+**Eu (salvar na pasta):** Li o codigo e achei: a pasta aberta era uma
+"foto antiga" (salvava e ela nao atualizava) e renomear o arquivo fazia
+ele perder a pasta. Corrigi: salvou, a pasta aberta se redesenha na hora,
+e o texto novo nasce dentro da pasta que esta aberta.
