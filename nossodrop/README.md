@@ -60,3 +60,11 @@ Descoberta na rede local: o servidor agrupa conexões pelo hash do IP público (
   Depois abra outro aparelho na mesma Wi-Fi em `http://<IP-do-PC>:3000`.
 - **Só olhar a página:** pelo GitHub Pages do repositório (após juntar o branch na `main`).
   No Pages é só visualização — o envio precisa do servidor rodando (item acima).
+
+## Ligação direta (sem servidor) 🔗
+
+No botão 🔗 da página: cada aparelho tem um **código** (ex.: `K7P2QX`).
+Digite o código do outro aparelho e clique **Conectar** — a conexão é feita
+via central pública do PeerJS só para a apresentação; depois os dados vão
+**direto aparelho↔aparelho** (nada fica guardado). Esse modo funciona até
+hospedado em site estático, como o GitHub Pages.

@@ -18,6 +18,8 @@ const els = {
   createRoom: $('createRoom'), joinCode: $('joinCode'), joinRoom: $('joinRoom'),
   roomCodeLabel: $('roomCodeLabel'), copyCode: $('copyCode'), copyLink: $('copyLink'),
   leaveRoom: $('leaveRoom'), qrBox: $('qrBox'),
+  directCodeLabel: $('directCodeLabel'), copyDirectCode: $('copyDirectCode'),
+  directCodeInput: $('directCodeInput'), connectDirect: $('connectDirect'),
 };
 
 /* ---------------- utilidades ---------------- */
@@ -359,10 +361,30 @@ function setupChannel(peerId, channel) {
   channel.onmessage = (e) => handleChannelMessage(peerId, e.data);
   channel.onclose = () => { if (connections.get(peerId)?.channel === channel) connections.get(peerId).channel = null; };
 }
+const sendQueues = new Map();       // fila de envios por aparelho (qualquer transporte)
+const incomingByPeer = new Map();   // arquivo sendo recebido, por aparelho
+const directConns = new Map();      // ligações diretas (PeerJS), por aparelho
+
 function enqueue(peerId, task) {
-  const conn = getOrCreateConnection(peerId);
-  conn.queue = conn.queue.then(task, task);
-  return conn.queue;
+  const prev = sendQueues.get(peerId) || Promise.resolve();
+  const next = prev.then(task, task);
+  sendQueues.set(peerId, next);
+  return next;
+}
+
+/* Transporte unificado: ligação direta (PeerJS) ou rede local (nosso servidor) */
+async function getTransport(peerId) {
+  const dc = directConns.get(peerId);
+  if (dc?.open) {
+    return { send: (d) => dc.send(d), bufferedAmount: 0, direct: true, isOpen: () => dc.open };
+  }
+  const channel = await ensureChannel(peerId);
+  return {
+    send: (d) => channel.send(d),
+    get bufferedAmount() { return channel.bufferedAmount; },
+    direct: false,
+    isOpen: () => channel.readyState === 'open',
+  };
 }
 
 /* ---------------- envio (arquivo = arrastar/clicar, texto = digitar) ---------------- */
@@ -379,20 +401,22 @@ function sendFiles(files) {
   });
 }
 async function sendOneFile(peerId, file, card) {
-  const channel = await ensureChannel(peerId);
+  const transport = await getTransport(peerId);
   const transferId = Math.random().toString(36).slice(2, 10);
-  channel.send(JSON.stringify({ type: 'file-header', transferId, name: file.name, size: file.size, mime: file.type || 'application/octet-stream' }));
+  transport.send(JSON.stringify({ type: 'file-header', transferId, name: file.name, size: file.size, mime: file.type || 'application/octet-stream' }));
   const started = Date.now();
   let offset = 0;
   while (offset < file.size) {
-    if (channel.readyState !== 'open') throw new Error('canal fechado');
-    if (channel.bufferedAmount > 1024 * 1024) { await new Promise((r) => setTimeout(r, 40)); continue; }
+    if (!transport.isOpen()) throw new Error('canal fechado');
+    if (transport.bufferedAmount > 1024 * 1024) { await new Promise((r) => setTimeout(r, 40)); continue; }
     const buf = await file.slice(offset, offset + CHUNK).arrayBuffer();
-    channel.send(buf);
+    transport.send(buf);
     offset += buf.byteLength;
     bubbleProgress(card, offset, file.size, started);
+    // na ligação direta, respira a cada ~1 MB para não entupir a central
+    if (transport.direct && offset % (CHUNK * 16) === 0) await new Promise((r) => setTimeout(r, 25));
   }
-  channel.send(JSON.stringify({ type: 'file-complete', transferId }));
+  transport.send(JSON.stringify({ type: 'file-complete', transferId }));
   bubbleDone(card, offset, started);
 }
 async function sendComposerText() {
@@ -414,26 +438,29 @@ async function sendComposerText() {
 
 /* ---------------- recebimento ---------------- */
 function handleChannelMessage(peerId, data) {
-  const conn = getOrCreateConnection(peerId);
+  // ligação direta pode entregar Blob/Uint8Array: normaliza para ArrayBuffer
+  if (data instanceof Blob) { data.arrayBuffer().then((buf) => handleChannelMessage(peerId, buf)); return; }
+  if (data instanceof Uint8Array) data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+
   const peer = peers.get(peerId);
   if (typeof data === 'string') {
     let msg;
     try { msg = JSON.parse(data); } catch { return; }
     if (msg.type === 'file-header') {
-      conn.incoming = {
+      incomingByPeer.set(peerId, {
         id: msg.transferId, name: msg.name, size: msg.size, mime: msg.mime,
         received: 0, chunks: [], started: Date.now(),
         card: addFileBubble('down', msg.name, msg.size, peer?.name),
-      };
+      });
       if (msg.size === 0) finishIncoming(peerId);
     } else if (msg.type === 'file-complete') {
-      if (conn.incoming?.id === msg.transferId) finishIncoming(peerId);
+      if (incomingByPeer.get(peerId)?.id === msg.transferId) finishIncoming(peerId);
     } else if (msg.type === 'text') {
       addTextBubble('down', msg.text, peer?.name);
     }
     return;
   }
-  const inc = conn.incoming;
+  const inc = incomingByPeer.get(peerId);
   if (!inc) return;
   inc.chunks.push(data);
   inc.received += data.byteLength;
@@ -441,10 +468,9 @@ function handleChannelMessage(peerId, data) {
   if (inc.received >= inc.size) finishIncoming(peerId);
 }
 function finishIncoming(peerId) {
-  const conn = getOrCreateConnection(peerId);
-  const inc = conn.incoming;
+  const inc = incomingByPeer.get(peerId);
   if (!inc) return;
-  conn.incoming = null;
+  incomingByPeer.delete(peerId);
   const url = URL.createObjectURL(new Blob(inc.chunks, { type: inc.mime }));
   const a = document.createElement('a');
   a.className = 'download-btn';
@@ -493,6 +519,78 @@ window.addEventListener('drop', (e) => {
   }
   sendFiles(files);
 });
+
+/* ---------------- ligação direta por código (PeerJS) ----------------
+   Funciona em qualquer hospedagem (inclusive GitHub Pages): a central
+   pública do PeerJS só faz a apresentação; depois é direto aparelho↔aparelho. */
+const DIRECT_PREFIX = 'nossodrop1-';
+let directPeer = null;
+let directCode = localStorage.getItem('nossodrop-direct-code') || '';
+if (!directCode) {
+  const alfabeto = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  directCode = Array.from({ length: 6 }, () => alfabeto[Math.floor(Math.random() * alfabeto.length)]).join('');
+  localStorage.setItem('nossodrop-direct-code', directCode);
+}
+if (els.directCodeLabel) els.directCodeLabel.textContent = directCode;
+
+function setupDirectConn(conn) {
+  directConns.set(conn.peer, conn);
+  conn.on('open', () => {
+    const name = conn.metadata?.name || `Aparelho ${conn.peer.replace(DIRECT_PREFIX, '')}`;
+    const device = conn.metadata?.device || '🔗 Direto';
+    peers.set(conn.peer, { id: conn.peer, name, device });
+    if (!selectedPeerId) selectedPeerId = conn.peer;
+    renderPeers();
+    addSystem(`${name} conectou direto 🔗`);
+  });
+  conn.on('data', (data) => handleChannelMessage(conn.peer, data));
+  const sair = () => {
+    const peer = peers.get(conn.peer);
+    directConns.delete(conn.peer);
+    if (!directConns.has(conn.peer) || peers.get(conn.peer)) {
+      // só remove da lista se não estiver também na rede local
+      if (peer && !connections.has(conn.peer)) peers.delete(conn.peer);
+    }
+    if (selectedPeerId === conn.peer) selectedPeerId = null;
+    renderPeers();
+    if (peer) addSystem(`${peer.name} desconectou`);
+  };
+  conn.on('close', sair);
+  conn.on('error', sair);
+}
+
+function initDirect(tentativas = 0) {
+  if (!window.Peer) {
+    if (tentativas < 20) setTimeout(() => initDirect(tentativas + 1), 500);
+    return;
+  }
+  directPeer = new window.Peer(DIRECT_PREFIX + directCode, { debug: 0 });
+  directPeer.on('open', () => { if (els.directCodeLabel) els.directCodeLabel.textContent = directCode; });
+  directPeer.on('connection', (conn) => setupDirectConn(conn));
+  directPeer.on('error', (err) => {
+    if (err.type === 'peer-unavailable') toast('Não achei esse código. A outra pessoa está com a página aberta? 🤔', true, 6000);
+    else if (err.type === 'unavailable-id') toast('Esse código já está em uso em outra aba.', true);
+    else if (err.type === 'network' || err.type === 'server-error') toast('Ligação direta indisponível agora (central fora do ar). Tente a sala/rede local.', true, 6000);
+  });
+  directPeer.on('disconnected', () => { try { directPeer.reconnect(); } catch { /* noop */ } });
+}
+
+function connectDirect() {
+  const code = els.directCodeInput.value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (!code) return toast('Digite o código do outro aparelho primeiro.', true);
+  if (code === directCode) return toast('Esse é o SEU código 😅 — digite o do outro aparelho.', true);
+  if (!directPeer) return toast('Ligação direta ainda carregando… tente de novo em 2 segundos.', true);
+  toast(`Conectando em ${code}…`);
+  const conn = directPeer.connect(DIRECT_PREFIX + code, {
+    reliable: true,
+    metadata: { name: myName, device: myDevice.label },
+  });
+  setupDirectConn(conn);
+}
+if (els.connectDirect) els.connectDirect.onclick = connectDirect;
+if (els.directCodeInput) els.directCodeInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') connectDirect(); });
+if (els.copyDirectCode) els.copyDirectCode.onclick = () => copyText(directCode, 'Seu código copiado!');
+initDirect();
 
 /* ---------------- início ---------------- */
 if (myName) els.myName.value = myName;

@@ -52,6 +52,17 @@
       <h3>🔗 Conectar aparelho</h3>
       <p class="muted">Na mesma Wi-Fi, basta abrir esta página no outro aparelho — ele aparece sozinho aqui no topo. Para longe, use uma sala:</p>
 
+      <div class="direct-box">
+        <label class="label" style="margin-top:0">🔗 Ligação direta (sem servidor)</label>
+        <p class="muted">Seu código: <strong id="directCodeLabel" class="direct-code">…</strong>
+          <button id="copyDirectCode" class="btn" type="button">Copiar</button></p>
+        <p class="muted small">A outra pessoa digita o seu código aqui embaixo no aparelho dela — ou você digita o dela:</p>
+        <div class="row">
+          <input id="directCodeInput" type="text" placeholder="Código do outro. Ex.: K7P2QX" maxlength="12" autocomplete="off" />
+          <button id="connectDirect" class="btn btn-primary" type="button">Conectar</button>
+        </div>
+      </div>
+
       <label class="label">Seu nome</label>
       <div class="row">
         <input id="myName" type="text" maxlength="40" placeholder="Seu nome" autocomplete="off" />
@@ -88,6 +99,7 @@
   <div id="toasts" class="toasts" aria-live="polite"></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js" defer></script>
   <script src="app.js"></script>
 </body>
 </html>

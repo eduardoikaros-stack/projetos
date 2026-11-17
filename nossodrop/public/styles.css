@@ -168,6 +168,8 @@ input[type="text"]:focus { border-color: var(--brand); }
   width: 32px; height: 32px; border-radius: 50%;
   border: 1px solid var(--border); background: #fff; color: var(--muted); cursor: pointer;
 }
+.direct-box { border: 1px solid var(--border); border-radius: 12px; padding: 14px; background: #f8f9ff; }
+.direct-code { letter-spacing: 3px; font-size: 18px; color: var(--brand); }
 .code-box {
   margin-top: 10px; text-align: center;
   border: 1.5px dashed var(--brand); border-radius: 12px; padding: 12px; background: var(--brand-soft);
