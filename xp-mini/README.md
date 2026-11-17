@@ -39,3 +39,13 @@ Salvar **para fora** tem 3 jeitos:
 | `index.html` | O Mini XP inteiro (página única) |
 | `textos/index.json` | Lista dos textos de fora |
 | `textos/*.txt` | Textos que aparecem dentro do sistema |
+
+## Ligado no servidor Git
+
+Os textos de fora são lidos **direto do repositório** (GitHub, branch
+`main`, pasta `xp-mini/textos/`) toda vez que o Explorador abre/atualiza —
+editou lá, apareceu aqui, sem esperar o site remontar. Se o GitHub estiver
+indisponível, ele usa a cópia que veio junto com o site.
+
+O arquivo `.nojekyll` na raiz do repositório impede o GitHub Pages de
+"processar" o site (causa comum de 404 em subpastas).

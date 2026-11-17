@@ -52,3 +52,14 @@ Adicionei no NossoDrop a **ligação direta por código** (botão 🔗):
 Pra isso valer no seu site público, falta só você aceitar a junção (Merge) aqui:
 https://github.com/eduardoikaros-stack/projetos/pull/1 — depois abre
 https://eduardoikaros-stack.github.io/projetos/ e usa o 🔗 nos dois aparelhos.
+
+**Eu (404 do Mini XP):** Achei! Era o GitHub ainda montando o site depois
+da junção — testei e ja esta no ar: https://eduardoikaros-stack.github.io/projetos/xp-mini/
+Tambem liguei os textos direto no servidor Git (repositorio): editou
+`xp-mini/textos/*.txt` la, abriu/Atualizou aqui, ja aparece dentro.
+Pra valer no site, aceita esta nova juncao quando eu mandar o link.
+
+**Eu (salvar na pasta):** Li o codigo e achei: a pasta aberta era uma
+"foto antiga" (salvava e ela nao atualizava) e renomear o arquivo fazia
+ele perder a pasta. Corrigi: salvou, a pasta aberta se redesenha na hora,
+e o texto novo nasce dentro da pasta que esta aberta.
