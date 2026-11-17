@@ -31,10 +31,13 @@
     </header>
 
     <div class="direct-bar" id="directBar">
-      <span class="direct-meu">Seu código: <strong id="directCodeLabel" class="direct-code">…</strong></span>
-      <button id="copyDirectCode" class="btn btn-sm" type="button">Copiar</button>
-      <input id="directCodeInput" type="text" placeholder="Código do outro" maxlength="12" autocomplete="off" />
-      <button id="connectDirect" class="btn btn-primary btn-sm" type="button">Conectar</button>
+      <button id="createRoom" class="btn btn-primary btn-sm" type="button">Criar sala</button>
+      <input id="joinCode" type="text" placeholder="Código da sala" maxlength="12" autocomplete="off" />
+      <button id="joinRoom" class="btn btn-sm" type="button">Entrar</button>
+      <span id="roomActiveBar" class="room-active hidden">Sala <strong id="roomCodeLabel">------</strong>
+        <button id="copyLink" class="btn btn-sm" type="button">Copiar link</button>
+        <button id="leaveRoom" class="btn btn-sm" type="button">Sair</button>
+      </span>
     </div>
 
     <main id="chat" class="chat">
@@ -66,36 +69,12 @@
       </div>
       <p class="muted small" id="deviceInfo"></p>
 
-      <div id="roomNetwork">
-        <div class="row">
-          <button id="createRoom" class="btn btn-primary">Criar sala</button>
-        </div>
-        <div class="row">
-          <input id="joinCode" type="text" placeholder="Código. Ex.: K7P2QX" maxlength="12" autocomplete="off" />
-          <button id="joinRoom" class="btn">Entrar</button>
-        </div>
-      </div>
 
-      <div id="roomActive" class="hidden">
-        <p class="muted">Passe este código ou link para a outra pessoa:</p>
-        <div class="code-box">
-          <span id="roomCodeLabel">------</span>
-        </div>
-        <div class="row">
-          <button id="copyCode" class="btn">Copiar código</button>
-          <button id="copyLink" class="btn">Copiar link</button>
-        </div>
-        <div id="qrBox" class="qr-box"></div>
-        <button id="leaveRoom" class="btn btn-danger">Sair da sala</button>
-      </div>
-    </div>
-  </div>
 
   <input type="file" id="fileInput" multiple hidden />
   <div id="toasts" class="toasts" aria-live="polite"></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js" defer></script>
   <script src="app.js"></script>
 </body>
 </html>

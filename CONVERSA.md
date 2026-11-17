@@ -99,3 +99,8 @@ tela principal, e achei o bug que matava o texto no site publico
 Testei com duas abas: conectou pelo codigo, texto e arquivo chegaram.
 Apos o Merge, abre https://eduardoikaros-stack.github.io/projetos/
 (que cai no NossoDrop) nos dois aparelhos.
+
+**Eu (de madrugada, 100% nosso):** Tirei o PeerJS. Agora so o NOSSO
+servidor apresenta os aparelhos (Criar sala / codigo na pagina).
+Testei: sala criada, dois se acharam, sinalizacao passou.
+Deixei tudo explicado em `nossodrop/LEIA-DE-MANHA.md`. Bom descanso!
