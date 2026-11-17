@@ -23,3 +23,4 @@ O `.bat` agora volta a ser só o botão de iniciar, limpinho.
 
 <!-- Apague esta linha e escreva sua próxima mensagem aqui -->
 
+vô apagar nada kkkk, crie uma coisa mais funcional assim fica meio estranho Fassa uma .ligação direta iguala aquele site para te mandar coisas por ligação direta não tem como ,? como que o sistema funciona ele armazena os dados onde ambos ficamos conectados antes e você mandou eu mande e onde ficou os dados ?
