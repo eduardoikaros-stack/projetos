@@ -62,6 +62,19 @@
       <h3>🔗 Conectar aparelho</h3>
       <p class="muted">Na mesma Wi-Fi, basta abrir esta página no outro aparelho — ele aparece sozinho aqui no topo. Para longe, use uma sala:</p>
 
+      <div class="direct-box">
+        <label class="label" style="margin-top:0">⭐ Parear aparelho (fica pra sempre)</label>
+        <p class="muted small">Pareados se acham em qualquer rede, sem código toda vez. Um gera a chave, o outro digita (vale 10 min):</p>
+        <div class="row">
+          <button id="pairInitiate" class="btn" type="button">Gerar chave</button>
+          <strong id="pairKeyLabel" class="direct-code"></strong>
+        </div>
+        <div class="row">
+          <input id="pairKeyInput" type="text" inputmode="numeric" placeholder="Chave do outro. Ex.: 123456" maxlength="6" autocomplete="off" />
+          <button id="pairJoin" class="btn btn-primary" type="button">Parear</button>
+        </div>
+      </div>
+
       <label class="label">Seu nome</label>
       <div class="row">
         <input id="myName" type="text" maxlength="40" placeholder="Seu nome" autocomplete="off" />

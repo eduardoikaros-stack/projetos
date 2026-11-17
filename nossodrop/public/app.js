@@ -19,6 +19,8 @@ const els = {
   roomCodeLabel: $('roomCodeLabel'), copyLink: $('copyLink'),
   leaveRoom: $('leaveRoom'),
   directBar: $('directBar'),
+  pairInitiate: $('pairInitiate'), pairKeyLabel: $('pairKeyLabel'),
+  pairKeyInput: $('pairKeyInput'), pairJoin: $('pairJoin'),
 };
 
 /* ---------------- utilidades ---------------- */
@@ -60,6 +62,11 @@ let hasMessages = false;
 const peers = new Map();       // peerId -> {id, name, device}
 const connections = new Map(); // peerId -> wrapper RTC
 let selectedPeerId = null;
+let mySecrets = [];
+try { mySecrets = JSON.parse(localStorage.getItem('nossodrop-secrets') || '[]'); } catch { mySecrets = []; }
+const pendingAccept = new Map(); // peerId -> resolve (pedido de envio)
+const sentCards = new Map();     // transferId -> bolha (pra confirmar recebimento)
+function saveSecrets() { try { localStorage.setItem('nossodrop-secrets', JSON.stringify(mySecrets)); } catch { /* noop */ } }
 
 function targetPeerId() {
   if (selectedPeerId && peers.has(selectedPeerId)) return selectedPeerId;
@@ -188,6 +195,7 @@ function connect() {
         if (!announced) {
           announced = true;
           sendWs({ type: 'set-name', name: myName, device: myDevice.label });
+          if (mySecrets.length) sendWs({ type: 'join-secrets', secrets: mySecrets });
         }
         break;
       }
@@ -208,6 +216,17 @@ function connect() {
         closeConnection(msg.peerId);
         renderPeers();
         if (peer) addSystem(`👋 ${peer.name} saiu`);
+        break;
+      }
+      case 'pair-key':
+        els.pairKeyLabel.textContent = msg.pairKey;
+        toast('Mostre esta chave pro outro aparelho: ' + msg.pairKey);
+        break;
+      case 'paired': {
+        if (!mySecrets.includes(msg.secret)) { mySecrets.push(msg.secret); saveSecrets(); }
+        sendWs({ type: 'join-secrets', secrets: mySecrets });
+        addSystem('⭐ Aparelho pareado! Agora vocês se acham em qualquer rede.');
+        toast('⭐ Pareado pra sempre!');
         break;
       }
       case 'signal':
@@ -241,7 +260,7 @@ function renderPeers() {
   peers.forEach((peer) => {
     const chip = document.createElement('button');
     chip.className = 'peer-chip' + (targetPeerId() === peer.id ? ' active' : '');
-    chip.textContent = `${peer.device?.split(' ')[0] || '📟'} ${peer.name}`;
+    chip.textContent = `${peer.paired ? '⭐ ' : ''}${peer.device?.split(' ')[0] || '📟'} ${peer.name}`;
     chip.onclick = () => { selectedPeerId = peer.id; renderPeers(); };
     els.peersBar.appendChild(chip);
   });
@@ -271,6 +290,12 @@ async function copyText(text, okMsg) {
   try { await navigator.clipboard.writeText(text); toast(okMsg); }
   catch { toast('Não consegui copiar automaticamente.', true); }
 }
+els.pairInitiate.onclick = () => { els.pairKeyLabel.textContent = '…'; sendWs({ type: 'pair-initiate' }); };
+els.pairJoin.onclick = () => {
+  const chave = els.pairKeyInput.value.replace(/\D/g, '');
+  if (chave.length !== 6) return toast('A chave tem 6 números.', true);
+  sendWs({ type: 'pair-join', pairKey: chave });
+};
 els.createRoom.onclick = () => sendWs({ type: 'create-room' });
 els.joinRoom.onclick = () => {
   const code = els.joinCode.value.trim();
@@ -386,15 +411,29 @@ function sendFiles(files) {
   const peerId = targetPeerId();
   if (!peerId) return toast('Nenhum aparelho conectado ainda. Abra a página em outro aparelho primeiro. 📱', true, 6000);
   const peer = peers.get(peerId);
-  files.forEach((file) => {
-    const card = addFileBubble('up', file.name, file.size, peer?.name);
-    enqueue(peerId, () => sendOneFile(peerId, file, card))
-      .catch(() => bubbleError(card, 'Não consegui conectar nesse aparelho.'));
-  });
+  const cards = files.map((file) => addFileBubble('up', file.name, file.size, peer?.name));
+  enqueue(peerId, async () => {
+    const aceito = await requestAccept(peerId, files);
+    if (!aceito) { cards.forEach((c) => bubbleError(c, 'O outro aparelho recusou.')); return; }
+    for (let i = 0; i < files.length; i++) await sendOneFile(peerId, files[i], cards[i]);
+  }).catch(() => cards.forEach((c) => bubbleError(c, 'Não consegui conectar nesse aparelho.')));
+}
+function requestAccept(peerId, files) {
+  return (async () => {
+    const transport = await getTransport(peerId);
+    const id = Math.random().toString(36).slice(2, 10);
+    const total = files.reduce((a, f) => a + f.size, 0);
+    transport.send(JSON.stringify({ type: 'request', id, totalSize: total, files: files.map((f) => ({ name: f.name, size: f.size })) }));
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => { pendingAccept.delete(peerId); resolve(false); }, 120000);
+      pendingAccept.set(peerId, (ok) => { clearTimeout(timer); pendingAccept.delete(peerId); resolve(ok); });
+    });
+  })();
 }
 async function sendOneFile(peerId, file, card) {
   const transport = await getTransport(peerId);
   const transferId = Math.random().toString(36).slice(2, 10);
+  sentCards.set(transferId, card);
   transport.send(JSON.stringify({ type: 'file-header', transferId, name: file.name, size: file.size, mime: file.type || 'application/octet-stream' }));
   const started = Date.now();
   let offset = 0;
@@ -408,6 +447,7 @@ async function sendOneFile(peerId, file, card) {
   }
   transport.send(JSON.stringify({ type: 'file-complete', transferId }));
   bubbleDone(card, offset, started);
+  card.status.textContent = 'Enviado · aguardando o outro aparelho confirmar…';
 }
 async function sendComposerText() {
   const text = els.composerInput.value.trim();
@@ -445,6 +485,17 @@ function handleChannelMessage(peerId, data) {
       if (msg.size === 0) finishIncoming(peerId);
     } else if (msg.type === 'file-complete') {
       if (incomingByPeer.get(peerId)?.id === msg.transferId) finishIncoming(peerId);
+    } else if (msg.type === 'request') {
+      const nomes = (msg.files || []).map((f) => f.name).join(', ');
+      const aceito = peer?.paired || window.confirm(`${peer?.name || 'Um aparelho'} quer enviar: ${nomes} (${formatBytes(msg.totalSize || 0)}). Aceitar?`);
+      getTransport(peerId).then((t) => t.send(JSON.stringify({ type: 'files-transfer-response', id: msg.id, accepted: !!aceito }))).catch(() => {});
+      if (!aceito) toast('Envio recusado.');
+    } else if (msg.type === 'files-transfer-response') {
+      const resolve = pendingAccept.get(peerId);
+      if (resolve) resolve(!!msg.accepted);
+    } else if (msg.type === 'file-received') {
+      const card = sentCards.get(msg.transferId);
+      if (card) { card.status.textContent = '✓ Recebido pelo outro aparelho · ' + nowTime(); sentCards.delete(msg.transferId); }
     } else if (msg.type === 'text') {
       addTextBubble('down', msg.text, peer?.name);
     }
@@ -461,6 +512,7 @@ function finishIncoming(peerId) {
   const inc = incomingByPeer.get(peerId);
   if (!inc) return;
   incomingByPeer.delete(peerId);
+  getTransport(peerId).then((t) => t.send(JSON.stringify({ type: 'file-received', transferId: inc.id }))).catch(() => {});
   const url = URL.createObjectURL(new Blob(inc.chunks, { type: inc.mime }));
   const a = document.createElement('a');
   a.className = 'download-btn';

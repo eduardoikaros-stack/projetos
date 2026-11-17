@@ -104,3 +104,24 @@ Apos o Merge, abre https://eduardoikaros-stack.github.io/projetos/
 servidor apresenta os aparelhos (Criar sala / codigo na pagina).
 Testei: sala criada, dois se acharam, sinalizacao passou.
 Deixei tudo explicado em `nossodrop/LEIA-DE-MANHA.md`. Bom descanso!
+
+## 🌙 Madrugada — estudo do PairDrop e NossoDrop seguindo a lógica dele
+
+- Você foi dormir e pediu: engenharia reversa do PairDrop pra entender
+  de verdade, e já criar o sistema se seguir a mesma lógica.
+- Estudei o código público dele (Git GPL, ~11,8 mil ⭐) — o relatório
+  completo tá em `nossodrop/ENGENHARIA-REVERSA-PAIRDROP.md` e o resumo
+  pra acordar em `nossodrop/BOM-DIA.md`.
+- Segredo dele: servidor só apresenta; 3 salas ao mesmo tempo (rede,
+  código, pareamento pra sempre); arquivo em pedaços de 64 KB com
+  pedido antes e confirmação depois.
+- Reescrevi nosso servidor pra multi-sala e pareamento (chave de 6
+  números → segredo guardado no aparelho → se acham pra sempre) e o
+  cliente pra pedir aceite e confirmar recebimento.
+- Testes da madrugada, todos verdes: pareamento com mesmo segredo dos
+  dois lados, reconectar só pelo segredo, texto e arquivo entregues
+  nas duas abas, confirmação "✓ Recebido pelo outro aparelho".
+- Não copiei código dele (a licença GPL obrigaria nosso projeto a ser
+  GPL): segui a lógica com nossa implementação, como você exigiu.
+- Falta quando você acordar: aceitar a junção e ligar nosso servidor
+  (casa ou Render, eu guio).
