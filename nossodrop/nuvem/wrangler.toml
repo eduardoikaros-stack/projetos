@@ -1,0 +1,14 @@
+# NossoDrop na nuvem — configuração (só pra quem for publicar pelo
+# computador Ferramenta wrangler; publicando pelo site da Cloudflare
+# NÃO precisa mexer aqui — siga o GUIA.md desta pasta).
+name = "nossodrop"
+main = "worker.js"
+compatibility_date = "2025-06-01"
+
+[[durable_objects.bindings]]
+name = "SALAO"
+class_name = "Salao"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Salao"]

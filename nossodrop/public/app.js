@@ -165,9 +165,19 @@ function bubbleError(card, msg) {
 function sendWs(msg) {
   if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg));
 }
-function connect() {
+function servidorUrl() {
+  // ?servidor=endereco permite apontar a página pro nosso servidor na
+  // nuvem (ex.: link do GitHub Pages continua funcionando). Fica salvo.
+  const daUrl = new URLSearchParams(location.search).get('servidor');
+  if (daUrl) { try { localStorage.setItem('nossodrop-servidor', daUrl); } catch { /* sem salvar */ } }
+  let salvo = null;
+  try { salvo = localStorage.getItem('nossodrop-servidor'); } catch { /* idem */ }
+  if (salvo) return salvo.startsWith('ws') ? salvo : `wss://${salvo.replace(/^\/+|\/+$/g, '')}/ws`;
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  ws = new WebSocket(`${proto}//${location.host}/ws`);
+  return `${proto}//${location.host}/ws`;
+}
+function connect() {
+  ws = new WebSocket(servidorUrl());
 
   ws.onopen = () => {
     els.connDot.className = 'dot dot-on';
