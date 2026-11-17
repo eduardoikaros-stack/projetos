@@ -22,3 +22,5 @@ pause
 
 rem teste com concegue ler ?
 rem RESPOSTA: consigo ler sim! :) - voce escreveu aqui, eu li aqui. Apague estas 2 linhas quando quiser.
+
+não tem forma mais fácil de criar isso e se usar um chat boot nosso ? e usar aqui dentro no lugar do bat?
