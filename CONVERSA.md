@@ -21,7 +21,14 @@ O `.bat` agora volta a ser só o botão de iniciar, limpinho.
 
 ## ✍️ Escreva aqui embaixo:
 
-<!-- Apague esta linha e escreva sua próxima mensagem aqui -->
+**Eu (sobre o Mini XP):** Feito! ✅ Coloquei seu XP mini em `xp-mini/` e arrumei tudo:
+fiel ao XP (tirei memória JS/VPS e textos que o XP não tem), arrastar pasta pra
+dentro de pasta, botão direito ou segurar **2 segundos** pra criar TXT, e os
+textos de `xp-mini/textos/` — você edita **fora** (aqui no GitHub) e eles
+atualizam **dentro** do Bloco de notas ao clicar Atualizar. Salvar pra fora:
+botão Baixar ou "Conectar arquivo" no Explorador.
+Pra ele ficar no seu site, aceita a junção: https://github.com/eduardoikaros-stack/projetos/pull/2
+depois ele abre em https://eduardoikaros-stack.github.io/projetos/xp-mini/
 
 vô apagar nada kkkk, crie uma coisa mais funcional assim fica meio estranho Fassa uma .ligação direta iguala aquele site para te mandar coisas por ligação direta não tem como ,? como que o sistema funciona ele armazena os dados onde ambos ficamos conectados antes e você mandou eu mande e onde ficou os dados ?
 

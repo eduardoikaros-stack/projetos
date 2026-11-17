@@ -1,0 +1,14 @@
+Bem-vindo ao Mini XP!
+
+Este texto mora FORA do sistema, no arquivo:
+  xp-mini/textos/bem-vindo.txt
+
+Se você editar este arquivo lá no GitHub (ou baixar o projeto e editar
+no seu computador) e depois abrir o Mini XP e clicar em Atualizar
+no Explorador, o texto novo aparece aqui dentro do Bloco de notas.
+
+Para salvar textos PARA FORA do sistema você pode:
+  1) Botão "Baixar" no Bloco de notas (gera o .txt no seu aparelho)
+  2) "Conectar arquivo" no Explorador (Chrome/Edge: abre um .txt de
+     verdade do seu computador e o Salvar escreve direto nele)
+  3) Escrever aqui dentro: salva sozinho neste navegador enquanto digita.
