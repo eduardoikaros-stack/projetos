@@ -61,3 +61,12 @@ O arquivo `.nojekyll` na raiz do repositório impede o GitHub Pages de
   Depois, Atualizar no Explorador traz o texto de volta pra dentro.
 - **Num arquivo de verdade no aparelho**: ⬇ Baixar, ou 🔗 Conectar
   arquivo (Chrome/Edge).
+
+### Como o Salvar funciona agora
+
+- **Enquanto digita:** salva automaticamente — primeiro no armazenamento
+  simples do navegador (localStorage, que manda na leitura) e espelhado
+  no cofre (IndexedDB). Por isso aparece na pasta aberta na hora.
+- **Botão 💾 Salvar:** salva **e baixa o `.txt` de verdade** no aparelho
+  (pasta Downloads) — é o "salvar no disco" do navegador.
+- **🐙 Salvar no GitHub:** salva no servidor, igual ao nosso caderno.

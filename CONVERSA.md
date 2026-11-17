@@ -69,3 +69,8 @@ texto estava la. O que faltava era salvar NO SERVIDOR igual aqui no
 caderno. Coloquei o botao "Salvar no GitHub" no Bloco de notas (abre o
 GitHub com o texto pronto, voce clica Commit e fica salvo de verdade),
 e uma reserva caso o navegador bloqueie o cofre local.
+
+**Eu (funcionar direito):** Achei o problema: o cofre do navegador nao
+tem acesso a nada fora dele. Mudei: texto salva primeiro no armazenamento
+simples (conferido), a pasta aberta mostra na hora, e o botao Salvar
+baixa o .txt de verdade no aparelho. Testei igual usuario e passou.
