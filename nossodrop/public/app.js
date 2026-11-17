@@ -18,6 +18,7 @@ const els = {
   createRoom: $('createRoom'), joinCode: $('joinCode'), joinRoom: $('joinRoom'),
   roomCodeLabel: $('roomCodeLabel'), copyCode: $('copyCode'), copyLink: $('copyLink'),
   leaveRoom: $('leaveRoom'), qrBox: $('qrBox'),
+  directBar: $('directBar'),
   directCodeLabel: $('directCodeLabel'), copyDirectCode: $('copyDirectCode'),
   directCodeInput: $('directCodeInput'), connectDirect: $('connectDirect'),
 };
@@ -182,8 +183,8 @@ function connect() {
         els.myName.value = myName;
         roomCode = msg.roomType === 'code' ? msg.room : null;
         renderRoom();
-        peers.clear();
-        msg.peers.forEach((p) => peers.set(p.id, p));
+        for (const [id, p] of peers) if (p.via !== 'direct') peers.delete(id);
+        msg.peers.forEach((p) => peers.set(p.id, { ...p, via: 'net' }));
         if (!selectedPeerId && peers.size) selectedPeerId = [...peers.keys()][0];
         renderPeers();
         if (!announced) {
@@ -193,13 +194,13 @@ function connect() {
         break;
       }
       case 'peer-joined':
-        peers.set(msg.peer.id, msg.peer);
+        peers.set(msg.peer.id, { ...msg.peer, via: 'net' });
         if (!selectedPeerId) selectedPeerId = msg.peer.id;
         renderPeers();
         addSystem(`${msg.peer.name} entrou`);
         break;
       case 'peer-updated':
-        peers.set(msg.peer.id, msg.peer);
+        peers.set(msg.peer.id, { ...msg.peer, via: 'net' });
         renderPeers();
         break;
       case 'peer-left': {
@@ -221,7 +222,7 @@ function connect() {
   };
   ws.onclose = () => {
     els.connDot.className = 'dot dot-off';
-    peers.clear();
+    for (const [id, p] of peers) if (p.via !== 'direct') peers.delete(id);
     renderPeers();
     setTimeout(connect, 2000);
   };
@@ -235,10 +236,10 @@ function renderPeers() {
     s.className = 'peer-chip muted';
     s.textContent = 'Aguardando…';
     els.peersBar.appendChild(s);
-    els.emptyHint.textContent = 'Abra esta página em outro aparelho (mesma Wi-Fi) — ou toque em 🔗 e use uma sala.';
+    els.emptyHint.textContent = 'Seu código está aqui em cima — a outra pessoa digita ele no aparelho dela.';
     return;
   }
-  els.emptyHint.textContent = `${peers.size === 1 ? 'Aparelho conectado' : 'Aparelhos conectados'}: toque no nome aqui no topo para escolher o destino.`;
+  els.emptyHint.textContent = '';
   peers.forEach((peer) => {
     const chip = document.createElement('button');
     chip.className = 'peer-chip' + (targetPeerId() === peer.id ? ' active' : '');
@@ -429,8 +430,8 @@ async function sendComposerText() {
   const peer = peers.get(peerId);
   addTextBubble('up', text, peer?.name);
   try {
-    const channel = await ensureChannel(peerId);
-    channel.send(JSON.stringify({ type: 'text', text }));
+    const transport = await getTransport(peerId);
+    transport.send(JSON.stringify({ type: 'text', text }));
   } catch {
     toast('Não consegui entregar — o aparelho ainda está conectado?', true);
   }
@@ -538,7 +539,7 @@ function setupDirectConn(conn) {
   conn.on('open', () => {
     const name = conn.metadata?.name || `Aparelho ${conn.peer.replace(DIRECT_PREFIX, '')}`;
     const device = conn.metadata?.device || '🔗 Direto';
-    peers.set(conn.peer, { id: conn.peer, name, device });
+    peers.set(conn.peer, { id: conn.peer, name, device, via: 'direct' });
     if (!selectedPeerId) selectedPeerId = conn.peer;
     renderPeers();
     addSystem(`${name} conectou direto 🔗`);

@@ -30,6 +30,13 @@
       </div>
     </header>
 
+    <div class="direct-bar" id="directBar">
+      <span class="direct-meu">Seu código: <strong id="directCodeLabel" class="direct-code">…</strong></span>
+      <button id="copyDirectCode" class="btn btn-sm" type="button">Copiar</button>
+      <input id="directCodeInput" type="text" placeholder="Código do outro" maxlength="12" autocomplete="off" />
+      <button id="connectDirect" class="btn btn-primary btn-sm" type="button">Conectar</button>
+    </div>
+
     <main id="chat" class="chat">
       <div id="emptyState" class="empty">
         <p>Arraste arquivos ou digite abaixo</p>
@@ -51,17 +58,6 @@
       <button class="modal-close" data-close aria-label="Fechar">✕</button>
       <h3>🔗 Conectar aparelho</h3>
       <p class="muted">Na mesma Wi-Fi, basta abrir esta página no outro aparelho — ele aparece sozinho aqui no topo. Para longe, use uma sala:</p>
-
-      <div class="direct-box">
-        <label class="label" style="margin-top:0">🔗 Ligação direta (sem servidor)</label>
-        <p class="muted">Seu código: <strong id="directCodeLabel" class="direct-code">…</strong>
-          <button id="copyDirectCode" class="btn" type="button">Copiar</button></p>
-        <p class="muted small">A outra pessoa digita o seu código aqui embaixo no aparelho dela — ou você digita o dela:</p>
-        <div class="row">
-          <input id="directCodeInput" type="text" placeholder="Código do outro. Ex.: K7P2QX" maxlength="12" autocomplete="off" />
-          <button id="connectDirect" class="btn btn-primary" type="button">Conectar</button>
-        </div>
-      </div>
 
       <label class="label">Seu nome</label>
       <div class="row">

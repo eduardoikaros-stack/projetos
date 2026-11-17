@@ -91,3 +91,11 @@ pode escrever neste repo?) e so salva se funcionar, mostrando
 "Conectado como @eduardoikaros-stack". Testei: token ruim recusado,
 token bom conectou e a frase salvou no servidor.
 Onde mexi: `aba/index.html`.
+
+**Eu (NossoDrop sem conta, de uma vez):** Arrumei como voce pediu:
+o PairDrop nosso, SEM conta/token. O codigo de conexao agora fica na
+tela principal, e achei o bug que matava o texto no site publico
+(ele tentava ir pelo servidor que nao existe la; arquivo ja ia direto).
+Testei com duas abas: conectou pelo codigo, texto e arquivo chegaram.
+Apos o Merge, abre https://eduardoikaros-stack.github.io/projetos/
+(que cai no NossoDrop) nos dois aparelhos.
