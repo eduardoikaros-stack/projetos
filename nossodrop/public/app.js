@@ -1,49 +1,35 @@
 /**
- * NossoDrop — cliente
- * Descoberta via WebSocket (servidor de sinalização) e transferência
- * direta entre navegadores via WebRTC DataChannel (P2P, criptografado).
+ * NossoDrop — cliente (interface limpa, tipo chat)
+ * Arrastar arquivos => envia. Digitar e enviar => texto.
+ * Transferência direta entre navegadores via WebRTC (P2P, criptografado);
+ * o servidor só apresenta os aparelhos (WebSocket de sinalização).
  */
 'use strict';
 
-/* ============================== utilidades ============================== */
 const $ = (id) => document.getElementById(id);
-
 const els = {
-  connDot: $('connDot'), connText: $('connText'),
-  radar: $('radar'), peersLayer: $('peersLayer'), emptyState: $('emptyState'),
-  meAvatar: $('meAvatar'), myAvatarPreview: $('myAvatarPreview'),
+  connDot: $('connDot'), peersBar: $('peersBar'), waitingChip: $('waitingChip'),
+  chat: $('chat'), emptyState: $('emptyState'), emptyHint: $('emptyHint'),
+  composerInput: $('composerInput'), sendBtn: $('sendBtn'), attachBtn: $('attachBtn'),
+  fileInput: $('fileInput'), dropOverlay: $('dropOverlay'), toasts: $('toasts'),
+  openRoomBtn: $('openRoomBtn'), roomModal: $('roomModal'),
   myName: $('myName'), saveName: $('saveName'), deviceInfo: $('deviceInfo'),
   roomNetwork: $('roomNetwork'), roomActive: $('roomActive'),
   createRoom: $('createRoom'), joinCode: $('joinCode'), joinRoom: $('joinRoom'),
   roomCodeLabel: $('roomCodeLabel'), copyCode: $('copyCode'), copyLink: $('copyLink'),
   leaveRoom: $('leaveRoom'), qrBox: $('qrBox'),
-  transfers: $('transfers'), noTransfers: $('noTransfers'), clearHistory: $('clearHistory'),
-  peerModal: $('peerModal'), modalAvatar: $('modalAvatar'), modalPeerName: $('modalPeerName'),
-  modalPeerMeta: $('modalPeerMeta'), modalSendFile: $('modalSendFile'), modalSendText: $('modalSendText'),
-  textModal: $('textModal'), textModalTo: $('textModalTo'), textInput: $('textInput'), sendTextBtn: $('sendTextBtn'),
-  fileInput: $('fileInput'), dropOverlay: $('dropOverlay'), dropHint: $('dropHint'),
-  toasts: $('toasts'),
 };
 
+/* ---------------- utilidades ---------------- */
 function formatBytes(bytes) {
   if (!bytes) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
   return `${(bytes / 1024 ** i).toFixed(i ? 1 : 0)} ${units[i]}`;
 }
-
-function initials(name) {
-  const parts = String(name || '?').trim().split(/\s+/);
-  return ((parts[0]?.[0] || '?') + (parts[1]?.[0] || '')).toUpperCase();
+function nowTime() {
+  return new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
-
-function avatarStyle(el, name) {
-  let hash = 0;
-  for (const ch of String(name)) hash = (hash * 31 + ch.charCodeAt(0)) % 360;
-  el.style.background = `linear-gradient(135deg, hsl(${hash} 75% 55%), hsl(${(hash + 60) % 360} 80% 45%))`;
-  el.textContent = initials(name);
-}
-
 function toast(msg, isError = false, ms = 4200) {
   const t = document.createElement('div');
   t.className = 'toast' + (isError ? ' error' : '');
@@ -51,66 +37,164 @@ function toast(msg, isError = false, ms = 4200) {
   els.toasts.appendChild(t);
   setTimeout(() => t.remove(), ms);
 }
-
 function detectDevice() {
   const ua = navigator.userAgent;
   const type = /iPad|Tablet/i.test(ua) ? 'Tablet' : /Mobi|Android|iPhone/i.test(ua) ? 'Celular' : 'Computador';
   const browser = /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Navegador';
   const icon = type === 'Celular' ? '📱' : type === 'Tablet' ? '📲' : '💻';
-  return { type, browser, icon, label: `${icon} ${type} · ${browser}` };
+  return { label: `${icon} ${type} · ${browser}` };
 }
 const myDevice = detectDevice();
-els.deviceInfo.textContent = `Este aparelho: ${myDevice.label} — arquivos vão direto ao destino, sem passar por nuvem.`;
+els.deviceInfo.textContent = `Este aparelho: ${myDevice.label}`;
 
-/* ============================== estado ============================== */
+/* ---------------- estado ---------------- */
 let ws = null;
 let myId = null;
 let myName = localStorage.getItem('nossodrop-name') || '';
 let roomCode = null;
-let announced = false; // já enviou nome+dispositivo ao servidor
+let announced = false;
 let joinedFromUrl = false;
+let hasMessages = false;
 
 const peers = new Map();       // peerId -> {id, name, device}
-const connections = new Map(); // peerId -> RTC wrapper
+const connections = new Map(); // peerId -> wrapper RTC
 let selectedPeerId = null;
-let pendingDropFiles = null;
 
-/* ============================== WebSocket ============================== */
-function wsUrl() {
-  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${proto}//${location.host}/ws`;
+function targetPeerId() {
+  if (selectedPeerId && peers.has(selectedPeerId)) return selectedPeerId;
+  return peers.size ? [...peers.keys()][0] : null;
+}
+function targetName() {
+  const id = targetPeerId();
+  return id ? peers.get(id).name : null;
 }
 
+/* ---------------- chat (bolhas) ---------------- */
+function scrollDown() { els.chat.scrollTop = els.chat.scrollHeight; }
+function hideEmpty() {
+  hasMessages = true;
+  els.emptyState.style.display = 'none';
+}
+function addSystem(text) {
+  hideEmpty();
+  const d = document.createElement('div');
+  d.className = 'system-msg';
+  d.textContent = text;
+  els.chat.appendChild(d);
+  scrollDown();
+}
+function addTextBubble(direction, text, peerName) {
+  hideEmpty();
+  const b = document.createElement('div');
+  b.className = `bubble ${direction === 'up' ? 'me' : 'them'}`;
+
+  const body = document.createElement('span');
+  body.textContent = text;
+  const meta = document.createElement('span');
+  meta.className = 'meta';
+  meta.textContent = direction === 'up'
+    ? `${peerName ? 'para ' + peerName + ' · ' : ''}${nowTime()} ✓`
+    : `${peerName ? peerName + ' · ' : ''}${nowTime()}`;
+  b.append(body, meta);
+
+  if (/^https?:\/\/\S+$/i.test(text.trim())) {
+    body.style.textDecoration = 'underline';
+    body.style.cursor = 'pointer';
+    body.title = 'Abrir link';
+    body.onclick = () => window.open(text.trim(), '_blank', 'noopener');
+  }
+  const copy = document.createElement('button');
+  copy.className = 'copy-btn';
+  copy.textContent = 'Copiar';
+  copy.onclick = () => copyText(text, 'Copiado!');
+  b.appendChild(document.createElement('br'));
+  b.appendChild(copy);
+
+  els.chat.appendChild(b);
+  scrollDown();
+  return b;
+}
+function fileIcon(name) {
+  return name.match(/\.(png|jpe?g|gif|webp|svg)$/i) ? '🖼️'
+    : name.match(/\.(mp4|mov|webm)$/i) ? '🎬'
+    : name.match(/\.(mp3|wav|ogg)$/i) ? '🎵'
+    : name.match(/\.(zip|rar|7z)$/i) ? '🗜️' : '📄';
+}
+function addFileBubble(direction, name, size, peerName) {
+  hideEmpty();
+  const b = document.createElement('div');
+  b.className = `bubble file ${direction === 'up' ? 'me' : 'them'}`;
+  b.innerHTML = `
+    <div class="file-head">
+      <span class="file-icon"></span>
+      <span><span class="file-name"></span><br><span class="file-size"></span></span>
+    </div>
+    <div class="bar"><div></div></div>
+    <div class="file-status"></div>`;
+  b.querySelector('.file-icon').textContent = fileIcon(name);
+  b.querySelector('.file-name').textContent = name;
+  b.querySelector('.file-size').textContent = formatBytes(size);
+  b.querySelector('.file-status').textContent = direction === 'up'
+    ? `Enviando para ${peerName || '…'}…` : `Recebendo de ${peerName || '…'}…`;
+  els.chat.appendChild(b);
+  scrollDown();
+  return {
+    root: b,
+    bar: b.querySelector('.bar'),
+    fill: b.querySelector('.bar > div'),
+    status: b.querySelector('.file-status'),
+    base: formatBytes(size),
+  };
+}
+function bubbleProgress(card, done, total, started) {
+  if (!total) return;
+  const pct = Math.min(100, Math.round((done / total) * 100));
+  card.fill.style.width = `${pct}%`;
+  const secs = Math.max((Date.now() - started) / 1000, 0.1);
+  card.status.textContent = `${pct}% · ${formatBytes(done / secs)}/s`;
+}
+function bubbleDone(card, total, started) {
+  card.fill.style.width = '100%';
+  card.bar.classList.add('done');
+  const secs = Math.max((Date.now() - started) / 1000, 0.1);
+  card.status.textContent = `✓ Concluído em ${secs.toFixed(1)}s · ${nowTime()}`;
+  card.root.classList.add('is-done');
+  scrollDown();
+}
+function bubbleError(card, msg) {
+  card.status.textContent = `⚠️ ${msg}`;
+}
+
+/* ---------------- WebSocket ---------------- */
+function sendWs(msg) {
+  if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg));
+}
 function connect() {
-  ws = new WebSocket(wsUrl());
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}/ws`);
 
   ws.onopen = () => {
     els.connDot.className = 'dot dot-on';
-    els.connText.textContent = 'Conectado';
     announced = false;
-    // sala vinda do link (?room=CODIGO)
     const fromUrl = new URLSearchParams(location.search).get('room');
     if (fromUrl && !joinedFromUrl) {
       joinedFromUrl = true;
       sendWs({ type: 'join-room', code: fromUrl });
     }
   };
-
   ws.onmessage = (ev) => {
     let msg;
     try { msg = JSON.parse(ev.data); } catch { return; }
-
     switch (msg.type) {
       case 'room-state': {
         myId = msg.you.id;
         if (!myName) myName = msg.you.name;
         els.myName.value = myName;
-        avatarStyle(els.meAvatar, myName);
-        avatarStyle(els.myAvatarPreview, myName);
         roomCode = msg.roomType === 'code' ? msg.room : null;
         renderRoom();
         peers.clear();
         msg.peers.forEach((p) => peers.set(p.id, p));
+        if (!selectedPeerId && peers.size) selectedPeerId = [...peers.keys()][0];
         renderPeers();
         if (!announced) {
           announced = true;
@@ -120,8 +204,9 @@ function connect() {
       }
       case 'peer-joined':
         peers.set(msg.peer.id, msg.peer);
+        if (!selectedPeerId) selectedPeerId = msg.peer.id;
         renderPeers();
-        toast(`👋 ${msg.peer.name} entrou`);
+        addSystem(`👋 ${msg.peer.name} entrou — já pode arrastar arquivos ou digitar aqui embaixo`);
         break;
       case 'peer-updated':
         peers.set(msg.peer.id, msg.peer);
@@ -130,9 +215,10 @@ function connect() {
       case 'peer-left': {
         const peer = peers.get(msg.peerId);
         peers.delete(msg.peerId);
+        if (selectedPeerId === msg.peerId) selectedPeerId = null;
         closeConnection(msg.peerId);
         renderPeers();
-        if (peer) toast(`👋 ${peer.name} saiu`);
+        if (peer) addSystem(`👋 ${peer.name} saiu`);
         break;
       }
       case 'signal':
@@ -143,25 +229,42 @@ function connect() {
         break;
     }
   };
-
   ws.onclose = () => {
     els.connDot.className = 'dot dot-off';
-    els.connText.textContent = 'Reconectando…';
     peers.clear();
     renderPeers();
     setTimeout(connect, 2000);
   };
 }
 
-function sendWs(msg) {
-  if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg));
+/* ---------------- aparelhos (chips no topo) ---------------- */
+function renderPeers() {
+  els.peersBar.innerHTML = '';
+  if (!peers.size) {
+    const s = document.createElement('span');
+    s.className = 'peer-chip muted';
+    s.textContent = '⏳ Aguardando aparelho…';
+    els.peersBar.appendChild(s);
+    els.emptyHint.textContent = 'Abra esta página em outro aparelho (mesma Wi-Fi) — ou toque em 🔗 e use uma sala.';
+    return;
+  }
+  els.emptyHint.textContent = `${peers.size === 1 ? 'Aparelho conectado' : 'Aparelhos conectados'}: toque no nome aqui no topo para escolher o destino.`;
+  peers.forEach((peer) => {
+    const chip = document.createElement('button');
+    chip.className = 'peer-chip' + (targetPeerId() === peer.id ? ' active' : '');
+    chip.textContent = `${peer.device?.split(' ')[0] || '📟'} ${peer.name}`;
+    chip.onclick = () => { selectedPeerId = peer.id; renderPeers(); };
+    els.peersBar.appendChild(chip);
+  });
 }
 
-/* ============================== sala ============================== */
-function roomLink() {
-  return `${location.origin}${location.pathname}?room=${roomCode}`;
-}
+/* ---------------- sala / nome (modal 🔗) ---------------- */
+els.openRoomBtn.onclick = () => els.roomModal.classList.remove('hidden');
+document.querySelectorAll('[data-close]').forEach((b) =>
+  b.addEventListener('click', () => b.closest('.modal-backdrop').classList.add('hidden')));
+els.roomModal.addEventListener('click', (e) => { if (e.target === els.roomModal) els.roomModal.classList.add('hidden'); });
 
+function roomLink() { return `${location.origin}${location.pathname}?room=${roomCode}`; }
 function renderRoom() {
   const active = !!roomCode;
   els.roomNetwork.classList.toggle('hidden', active);
@@ -169,33 +272,17 @@ function renderRoom() {
   if (active) {
     els.roomCodeLabel.textContent = roomCode;
     history.replaceState(null, '', `?room=${roomCode}`);
-    renderQr();
+    els.qrBox.innerHTML = '';
+    const make = () => { if (window.QRCode) new window.QRCode(els.qrBox, { text: roomLink(), width: 150, height: 150 }); };
+    window.QRCode ? make() : setTimeout(make, 700);
   } else {
     history.replaceState(null, '', location.pathname);
   }
 }
-
-function renderQr() {
-  els.qrBox.innerHTML = '';
-  const make = () => {
-    if (window.QRCode) {
-      // eslint-disable-next-line no-new
-      new window.QRCode(els.qrBox, { text: roomLink(), width: 160, height: 160 });
-    }
-  };
-  if (window.QRCode) make();
-  else setTimeout(make, 700); // aguarda o script defer carregar
-}
-
 async function copyText(text, okMsg) {
-  try {
-    await navigator.clipboard.writeText(text);
-    toast(okMsg);
-  } catch {
-    toast('Não consegui copiar automaticamente — copie manualmente.', true);
-  }
+  try { await navigator.clipboard.writeText(text); toast(okMsg); }
+  catch { toast('Não consegui copiar automaticamente.', true); }
 }
-
 els.createRoom.onclick = () => sendWs({ type: 'create-room' });
 els.joinRoom.onclick = () => {
   const code = els.joinCode.value.trim();
@@ -205,149 +292,33 @@ els.joinRoom.onclick = () => {
 els.joinCode.addEventListener('keydown', (e) => { if (e.key === 'Enter') els.joinRoom.click(); });
 els.leaveRoom.onclick = () => sendWs({ type: 'leave-room' });
 els.copyCode.onclick = () => copyText(roomCode, 'Código copiado!');
-els.copyLink.onclick = () => copyText(roomLink(), 'Link da sala copiado!');
-
-/* ============================== nome ============================== */
+els.copyLink.onclick = () => copyText(roomLink(), 'Link copiado!');
 function saveMyName() {
   const name = els.myName.value.trim();
   if (!name) return;
   myName = name.slice(0, 40);
   localStorage.setItem('nossodrop-name', myName);
-  avatarStyle(els.meAvatar, myName);
-  avatarStyle(els.myAvatarPreview, myName);
   sendWs({ type: 'set-name', name: myName, device: myDevice.label });
-  toast('Nome atualizado!');
+  toast('Nome salvo!');
 }
 els.saveName.onclick = saveMyName;
-els.myName.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveMyName(); });
 
-/* ============================== lista de dispositivos ============================== */
-function renderPeers() {
-  els.peersLayer.innerHTML = '';
-  els.emptyState.style.display = peers.size ? 'none' : 'block';
-
-  const list = [...peers.values()];
-  list.forEach((peer, i) => {
-    // distribui os dispositivos em volta do centro, no anel externo do radar
-    const angle = (i / Math.max(list.length, 1)) * Math.PI * 2 - Math.PI / 2;
-    const radiusPct = 34;
-    const x = 50 + radiusPct * Math.cos(angle);
-    const y = 50 + radiusPct * Math.sin(angle);
-
-    const btn = document.createElement('button');
-    btn.className = 'peer-bubble';
-    btn.style.left = `${x}%`;
-    btn.style.top = `${y}%`;
-    btn.title = `Enviar para ${peer.name}`;
-
-    const avatar = document.createElement('div');
-    avatar.className = 'avatar';
-    avatarStyle(avatar, peer.name);
-    const name = document.createElement('span');
-    name.className = 'peer-name';
-    name.textContent = peer.name;
-    const device = document.createElement('span');
-    device.className = 'peer-device';
-    device.textContent = peer.device || '';
-
-    btn.append(avatar, name, device);
-    btn.onclick = () => onPeerClick(peer.id);
-    els.peersLayer.appendChild(btn);
-  });
-}
-
-function onPeerClick(peerId) {
-  if (pendingDropFiles?.length) {
-    const files = pendingDropFiles;
-    pendingDropFiles = null;
-    sendFilesTo(peerId, files);
-    return;
-  }
-  openPeerModal(peerId);
-}
-
-/* ============================== modais ============================== */
-function openModal(el) { el.classList.remove('hidden'); }
-function closeModal(el) { el.classList.add('hidden'); }
-document.querySelectorAll('[data-close]').forEach((b) =>
-  b.addEventListener('click', () => b.closest('.modal-backdrop').classList.add('hidden')));
-[els.peerModal, els.textModal].forEach((m) =>
-  m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); }));
-
-function openPeerModal(peerId) {
-  const peer = peers.get(peerId);
-  if (!peer) return;
-  selectedPeerId = peerId;
-  avatarStyle(els.modalAvatar, peer.name);
-  els.modalPeerName.textContent = peer.name;
-  els.modalPeerMeta.textContent = peer.device || '';
-  openModal(els.peerModal);
-}
-
-els.modalSendFile.onclick = () => {
-  closeModal(els.peerModal);
-  els.fileInput.click();
-};
-
-els.modalSendText.onclick = () => {
-  closeModal(els.peerModal);
-  const peer = peers.get(selectedPeerId);
-  els.textModalTo.textContent = peer ? `Para: ${peer.name}` : '';
-  els.textInput.value = '';
-  openModal(els.textModal);
-  els.textInput.focus();
-};
-
-els.fileInput.onchange = () => {
-  const files = [...els.fileInput.files];
-  els.fileInput.value = '';
-  if (files.length && selectedPeerId) sendFilesTo(selectedPeerId, files);
-};
-
-els.sendTextBtn.onclick = async () => {
-  const text = els.textInput.value.trim();
-  if (!text || !selectedPeerId) return;
-  closeModal(els.textModal);
-  try {
-    await sendTextTo(selectedPeerId, text);
-    toast(`💬 Texto enviado para ${peers.get(selectedPeerId)?.name || 'dispositivo'}`);
-  } catch {
-    toast('Não consegui conectar nesse dispositivo. Ele ainda está na sala?', true);
-  }
-};
-
-/* ============================== WebRTC ============================== */
-const RTC_CONFIG = {
-  iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-  ],
-};
+/* ---------------- WebRTC ---------------- */
+const RTC_CONFIG = { iceServers: [
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+]};
 
 function getOrCreateConnection(peerId) {
   if (connections.has(peerId)) return connections.get(peerId);
-
   const pc = new RTCPeerConnection(RTC_CONFIG);
-  const conn = {
-    pc,
-    channel: null,
-    makingOffer: false,
-    queue: Promise.resolve(), // fila serial de envios por dispositivo
-    incoming: null,            // transferência recebida em andamento
-    openWaiters: [],
-  };
+  const conn = { pc, channel: null, makingOffer: false, queue: Promise.resolve(), incoming: null, openWaiters: [] };
   connections.set(peerId, conn);
-
-  pc.onicecandidate = (e) => {
-    if (e.candidate) sendWs({ type: 'signal', to: peerId, data: { candidate: e.candidate } });
-  };
+  pc.onicecandidate = (e) => { if (e.candidate) sendWs({ type: 'signal', to: peerId, data: { candidate: e.candidate } }); };
   pc.ondatachannel = (e) => setupChannel(peerId, e.channel);
-  pc.onconnectionstatechange = () => {
-    if (['failed', 'closed'].includes(pc.connectionState)) closeConnection(peerId);
-  };
+  pc.onconnectionstatechange = () => { if (['failed', 'closed'].includes(pc.connectionState)) closeConnection(peerId); };
   return conn;
 }
-
 function closeConnection(peerId) {
   const conn = connections.get(peerId);
   if (!conn) return;
@@ -355,18 +326,15 @@ function closeConnection(peerId) {
   try { conn.pc.close(); } catch { /* noop */ }
   connections.delete(peerId);
 }
-
 async function handleSignal(peerId, data) {
   const conn = getOrCreateConnection(peerId);
   const pc = conn.pc;
-
   if (data.sdp) {
     const desc = data.sdp;
-    const polite = myId > peerId; // desempate quando os dois oferecem ao mesmo tempo
+    const polite = myId > peerId;
     const collision = desc.type === 'offer' && (conn.makingOffer || pc.signalingState !== 'stable');
     if (collision && !polite) return;
     if (collision) await pc.setLocalDescription({ type: 'rollback' }).catch(() => {});
-
     await pc.setRemoteDescription(desc);
     if (desc.type === 'offer') {
       const answer = await pc.createAnswer();
@@ -374,11 +342,9 @@ async function handleSignal(peerId, data) {
       sendWs({ type: 'signal', to: peerId, data: { sdp: pc.localDescription } });
     }
   } else if (data.candidate) {
-    try { await pc.addIceCandidate(data.candidate); }
-    catch { /* candidato chegou antes da descrição remota: ignora */ }
+    try { await pc.addIceCandidate(data.candidate); } catch { /* cedo demais: ignora */ }
   }
 }
-
 async function ensureChannel(peerId) {
   const conn = getOrCreateConnection(peerId);
   if (!conn.channel) {
@@ -388,271 +354,158 @@ async function ensureChannel(peerId) {
       const offer = await conn.pc.createOffer();
       await conn.pc.setLocalDescription(offer);
       sendWs({ type: 'signal', to: peerId, data: { sdp: conn.pc.localDescription } });
-    } finally {
-      conn.makingOffer = false;
-    }
+    } finally { conn.makingOffer = false; }
   }
   if (conn.channel.readyState === 'open') return conn.channel;
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('timeout ao conectar')), 20000);
+    const timer = setTimeout(() => reject(new Error('timeout')), 20000);
     conn.openWaiters.push(() => { clearTimeout(timer); resolve(conn.channel); });
   });
 }
-
 function setupChannel(peerId, channel) {
   const conn = getOrCreateConnection(peerId);
   conn.channel = channel;
   channel.binaryType = 'arraybuffer';
   channel.bufferedAmountLowThreshold = 256 * 1024;
-
-  channel.onopen = () => {
-    conn.openWaiters.splice(0).forEach((fn) => fn());
-  };
+  channel.onopen = () => conn.openWaiters.splice(0).forEach((fn) => fn());
   channel.onmessage = (e) => handleChannelMessage(peerId, e.data);
-  channel.onclose = () => {
-    if (connections.get(peerId)?.channel === channel) connections.get(peerId).channel = null;
-  };
+  channel.onclose = () => { if (connections.get(peerId)?.channel === channel) connections.get(peerId).channel = null; };
 }
-
 function enqueue(peerId, task) {
   const conn = getOrCreateConnection(peerId);
   conn.queue = conn.queue.then(task, task);
   return conn.queue;
 }
 
-/* ============================== envio ============================== */
-const CHUNK = 64 * 1024; // 64 KB por pedaço
+/* ---------------- envio (arquivo = arrastar/clicar, texto = digitar) ---------------- */
+const CHUNK = 64 * 1024;
 
-function sendFilesTo(peerId, files) {
+function sendFiles(files) {
+  const peerId = targetPeerId();
+  if (!peerId) return toast('Nenhum aparelho conectado ainda. Abra a página em outro aparelho primeiro. 📱', true, 6000);
   const peer = peers.get(peerId);
   files.forEach((file) => {
-    const card = createTransferCard({ direction: 'up', name: file.name, size: file.size, peerName: peer?.name });
-    enqueue(peerId, () => sendOneFile(peerId, file, card)).catch(() => {
-      markError(card, 'Não foi possível conectar nesse dispositivo.');
-    });
+    const card = addFileBubble('up', file.name, file.size, peer?.name);
+    enqueue(peerId, () => sendOneFile(peerId, file, card))
+      .catch(() => bubbleError(card, 'Não consegui conectar nesse aparelho.'));
   });
 }
-
 async function sendOneFile(peerId, file, card) {
   const channel = await ensureChannel(peerId);
   const transferId = Math.random().toString(36).slice(2, 10);
-
-  channel.send(JSON.stringify({
-    type: 'file-header', transferId, name: file.name, size: file.size,
-    mime: file.type || 'application/octet-stream',
-  }));
-
+  channel.send(JSON.stringify({ type: 'file-header', transferId, name: file.name, size: file.size, mime: file.type || 'application/octet-stream' }));
   const started = Date.now();
   let offset = 0;
   while (offset < file.size) {
     if (channel.readyState !== 'open') throw new Error('canal fechado');
-    if (channel.bufferedAmount > 1024 * 1024) {
-      await new Promise((r) => setTimeout(r, 40));
-      continue;
-    }
-    const slice = file.slice(offset, offset + CHUNK);
-    const buf = await slice.arrayBuffer();
+    if (channel.bufferedAmount > 1024 * 1024) { await new Promise((r) => setTimeout(r, 40)); continue; }
+    const buf = await file.slice(offset, offset + CHUNK).arrayBuffer();
     channel.send(buf);
     offset += buf.byteLength;
-    updateProgress(card, offset, file.size, started);
+    bubbleProgress(card, offset, file.size, started);
   }
-  // arquivo vazio também entra no fluxo acima sem enviar pedaços: ok
-
   channel.send(JSON.stringify({ type: 'file-complete', transferId }));
-  markDone(card, offset, started);
+  bubbleDone(card, offset, started);
 }
-
-async function sendTextTo(peerId, text) {
-  const channel = await ensureChannel(peerId);
-  channel.send(JSON.stringify({ type: 'text', text }));
+async function sendComposerText() {
+  const text = els.composerInput.value.trim();
+  if (!text) return;
+  const peerId = targetPeerId();
+  if (!peerId) return toast('Nenhum aparelho conectado ainda. Abra a página em outro aparelho primeiro. 📱', true, 6000);
+  els.composerInput.value = '';
+  autoGrow();
   const peer = peers.get(peerId);
-  createTextCard({ direction: 'up', text, peerName: peer?.name, done: true });
+  addTextBubble('up', text, peer?.name);
+  try {
+    const channel = await ensureChannel(peerId);
+    channel.send(JSON.stringify({ type: 'text', text }));
+  } catch {
+    toast('Não consegui entregar — o aparelho ainda está conectado?', true);
+  }
 }
 
-/* ============================== recebimento ============================== */
+/* ---------------- recebimento ---------------- */
 function handleChannelMessage(peerId, data) {
   const conn = getOrCreateConnection(peerId);
   const peer = peers.get(peerId);
-
   if (typeof data === 'string') {
     let msg;
     try { msg = JSON.parse(data); } catch { return; }
-
     if (msg.type === 'file-header') {
       conn.incoming = {
-        id: msg.transferId, name: msg.name, size: msg.size,
-        mime: msg.mime, received: 0, chunks: [], started: Date.now(),
-        card: createTransferCard({ direction: 'down', name: msg.name, size: msg.size, peerName: peer?.name }),
+        id: msg.transferId, name: msg.name, size: msg.size, mime: msg.mime,
+        received: 0, chunks: [], started: Date.now(),
+        card: addFileBubble('down', msg.name, msg.size, peer?.name),
       };
       if (msg.size === 0) finishIncoming(peerId);
     } else if (msg.type === 'file-complete') {
-      if (conn.incoming && conn.incoming.id === msg.transferId) finishIncoming(peerId);
+      if (conn.incoming?.id === msg.transferId) finishIncoming(peerId);
     } else if (msg.type === 'text') {
-      createTextCard({ direction: 'down', text: msg.text, peerName: peer?.name });
-      toast(`💬 ${peer?.name || 'Um dispositivo'} te enviou um texto`);
+      addTextBubble('down', msg.text, peer?.name);
     }
     return;
   }
-
-  // dados binários = próximo pedaço do arquivo em andamento
   const inc = conn.incoming;
   if (!inc) return;
   inc.chunks.push(data);
   inc.received += data.byteLength;
-  updateProgress(inc.card, inc.received, inc.size, inc.started);
+  bubbleProgress(inc.card, inc.received, inc.size, inc.started);
   if (inc.received >= inc.size) finishIncoming(peerId);
 }
-
 function finishIncoming(peerId) {
   const conn = getOrCreateConnection(peerId);
   const inc = conn.incoming;
   if (!inc) return;
   conn.incoming = null;
-
-  const blob = new Blob(inc.chunks, { type: inc.mime });
-  const url = URL.createObjectURL(blob);
-  attachDownload(inc.card, url, inc.name);
-  markDone(inc.card, inc.received, inc.started);
-  toast(`📥 Você recebeu "${inc.name}"`);
-}
-
-/* ============================== cartões de transferência ============================== */
-function ensureTransfersVisible() { els.noTransfers?.remove(); }
-
-function cardShell({ icon, name, meta }) {
-  ensureTransfersVisible();
-  const root = document.createElement('div');
-  root.className = 'transfer';
-  root.innerHTML = `
-    <div class="t-icon"></div>
-    <div>
-      <div class="t-name"></div>
-      <div class="t-meta"></div>
-      <div class="bar"><div></div></div>
-    </div>
-    <div class="t-actions"></div>`;
-  root.querySelector('.t-icon').textContent = icon;
-  root.querySelector('.t-name').textContent = name;
-  root.querySelector('.t-meta').textContent = meta;
-  els.transfers.prepend(root);
-  return {
-    root,
-    bar: root.querySelector('.bar'),
-    fill: root.querySelector('.bar > div'),
-    meta: root.querySelector('.t-meta'),
-    actions: root.querySelector('.t-actions'),
-  };
-}
-
-function createTransferCard({ direction, name, size, peerName }) {
-  const icon = name.match(/\.(png|jpe?g|gif|webp|svg)$/i) ? '🖼️'
-    : name.match(/\.(mp4|mov|webm)$/i) ? '🎬'
-    : name.match(/\.(mp3|wav|ogg)$/i) ? '🎵'
-    : name.match(/\.(zip|rar|7z)$/i) ? '🗜️' : '📄';
-  const who = direction === 'up' ? `para ${peerName || 'dispositivo'}` : `de ${peerName || 'dispositivo'}`;
-  const card = cardShell({ icon, name, meta: `${who} · ${formatBytes(size)} · ${direction === 'up' ? 'enviando…' : 'recebendo…'}` });
-  card.baseMeta = `${who} · ${formatBytes(size)}`;
-  return card;
-}
-
-function createTextCard({ direction, text, peerName }) {
-  const card = cardShell({
-    icon: '💬',
-    name: direction === 'up' ? `Texto para ${peerName || ''}` : `Texto de ${peerName || ''}`,
-    meta: direction === 'up' ? 'texto enviado' : 'texto recebido',
-  });
-  card.bar.remove();
-  const body = document.createElement('div');
-  body.className = 't-text';
-  body.textContent = text;
-  card.root.appendChild(body);
-
-  const copy = document.createElement('button');
-  copy.className = 'btn btn-ghost btn-sm';
-  copy.textContent = 'Copiar';
-  copy.onclick = () => copyText(text, 'Texto copiado!');
-  card.actions.appendChild(copy);
-  if (/^https?:\/\//i.test(text.trim())) {
-    const open = document.createElement('button');
-    open.className = 'btn btn-ghost btn-sm';
-    open.textContent = 'Abrir link';
-    open.onclick = () => window.open(text.trim(), '_blank', 'noopener');
-    card.actions.appendChild(open);
-  }
-  card.root.classList.add('is-done');
-  return card;
-}
-
-function updateProgress(card, done, total, started) {
-  if (!total) return;
-  const pct = Math.min(100, Math.round((done / total) * 100));
-  card.fill.style.width = `${pct}%`;
-  const secs = Math.max((Date.now() - started) / 1000, 0.1);
-  const speed = formatBytes(done / secs);
-  card.meta.textContent = `${card.baseMeta} · ${pct}% · ${speed}/s`;
-}
-
-function markDone(card, total, started) {
-  card.fill.style.width = '100%';
-  card.bar.classList.add('done');
-  const secs = Math.max((Date.now() - started) / 1000, 0.1);
-  card.meta.textContent = `${card.baseMeta} · concluído em ${secs.toFixed(1)}s`;
-  card.root.classList.add('is-done');
-}
-
-function markError(card, msg) {
-  card.meta.textContent = `⚠️ ${msg}`;
-  toast(msg, true);
-}
-
-function attachDownload(card, url, filename) {
+  const url = URL.createObjectURL(new Blob(inc.chunks, { type: inc.mime }));
   const a = document.createElement('a');
-  a.className = 'btn btn-primary btn-sm';
+  a.className = 'download-btn';
   a.textContent = '⬇️ Baixar / Salvar';
   a.href = url;
-  a.download = filename;
-  card.actions.appendChild(a);
+  a.download = inc.name;
+  inc.card.root.appendChild(a);
+  bubbleDone(inc.card, inc.received, inc.started);
 }
 
-els.clearHistory.onclick = () => {
-  els.transfers.querySelectorAll('.is-done').forEach((el) => el.remove());
-  if (!els.transfers.children.length) {
-    const p = document.createElement('p');
-    p.className = 'muted';
-    p.id = 'noTransfers';
-    p.textContent = 'Nada por aqui ainda. Envie ou receba um arquivo para ver o progresso.';
-    els.transfers.appendChild(p);
-    els.noTransfers = p;
-  }
+/* ---------------- digitar / anexar / arrastar / colar ---------------- */
+function autoGrow() {
+  els.composerInput.style.height = 'auto';
+  els.composerInput.style.height = Math.min(els.composerInput.scrollHeight, 130) + 'px';
+}
+els.composerInput.addEventListener('input', autoGrow);
+els.composerInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendComposerText(); }
+});
+els.composerInput.addEventListener('paste', (e) => {
+  const files = [...(e.clipboardData?.files || [])];
+  if (files.length) { e.preventDefault(); sendFiles(files); }
+});
+els.sendBtn.onclick = sendComposerText;
+els.attachBtn.onclick = () => els.fileInput.click();
+els.fileInput.onchange = () => {
+  const files = [...els.fileInput.files];
+  els.fileInput.value = '';
+  if (files.length) sendFiles(files);
 };
 
-/* ============================== arrastar e soltar ============================== */
 let dragDepth = 0;
-window.addEventListener('dragenter', (e) => {
-  e.preventDefault();
-  dragDepth++;
-  els.dropOverlay.classList.add('show');
-  els.dropHint.textContent = peers.size === 1
-    ? `soltar envia para ${[...peers.values()][0].name}`
-    : peers.size > 1 ? 'depois toque no dispositivo de destino' : 'nenhum dispositivo conectado ainda';
-});
+window.addEventListener('dragenter', (e) => { e.preventDefault(); dragDepth++; els.dropOverlay.classList.add('show'); });
 window.addEventListener('dragover', (e) => e.preventDefault());
-window.addEventListener('dragleave', (e) => {
-  e.preventDefault();
-  if (--dragDepth <= 0) { dragDepth = 0; els.dropOverlay.classList.remove('show'); }
-});
+window.addEventListener('dragleave', (e) => { e.preventDefault(); if (--dragDepth <= 0) { dragDepth = 0; els.dropOverlay.classList.remove('show'); } });
 window.addEventListener('drop', (e) => {
   e.preventDefault();
   dragDepth = 0;
   els.dropOverlay.classList.remove('show');
   const files = [...(e.dataTransfer?.files || [])];
-  if (!files.length) return;
-  if (peers.size === 0) return toast('Nenhum dispositivo conectado para receber. 😕', true);
-  if (peers.size === 1) return sendFilesTo([...peers.keys()][0], files);
-  pendingDropFiles = files;
-  toast(`📁 ${files.length} arquivo(s) pronto(s) — agora toque no dispositivo de destino.`);
+  // soltou texto puro (ex.: trecho arrastado de outra aba)? vira mensagem de texto
+  if (!files.length) {
+    const text = e.dataTransfer?.getData('text/plain')?.trim();
+    if (text) { els.composerInput.value = text; autoGrow(); sendComposerText(); }
+    return;
+  }
+  sendFiles(files);
 });
 
-/* ============================== início ============================== */
+/* ---------------- início ---------------- */
 if (myName) els.myName.value = myName;
 connect();

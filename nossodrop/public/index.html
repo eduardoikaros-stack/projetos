@@ -3,161 +3,86 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#0b0f1a" />
-  <meta name="description" content="NossoDrop — compartilhe arquivos e textos entre dispositivos, direto do navegador, sem nuvem e sem cadastro." />
-  <title>NossoDrop — Compartilhe entre dispositivos</title>
+  <meta name="theme-color" content="#ffffff" />
+  <title>NossoDrop</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪂</text></svg>" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 
-  <!-- Overlay de arrastar-e-soltar -->
+  <!-- Soltar arquivo -->
   <div id="dropOverlay" class="drop-overlay" aria-hidden="true">
     <div class="drop-box">
       <div class="drop-icon">📥</div>
       <p>Solte para enviar</p>
-      <span id="dropHint">escolha o dispositivo na tela seguinte</span>
     </div>
   </div>
 
-  <header class="topbar">
-    <div class="brand">
-      <span class="brand-icon">🪂</span>
-      <div>
-        <strong>NossoDrop</strong>
-        <small>nosso AirDrop, no navegador</small>
-      </div>
-    </div>
-    <div class="conn">
-      <span id="connDot" class="dot dot-off"></span>
-      <span id="connText">Conectando…</span>
-    </div>
-  </header>
-
-  <main>
-    <!-- RADAR / DISPOSITIVOS -->
-    <section class="stage" aria-label="Dispositivos próximos">
-      <div class="radar" id="radar">
-        <div class="ring r1"></div>
-        <div class="ring r2"></div>
-        <div class="ring r3"></div>
-
-        <div class="me" id="meBubble" title="Este é você">
-          <div class="avatar avatar-me" id="meAvatar">?</div>
-          <span class="me-label">Você</span>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">🪂 <strong>NossoDrop</strong></div>
+      <div class="top-right">
+        <div id="peersBar" class="peers-bar">
+          <span class="peer-chip muted" id="waitingChip">⏳ Aguardando aparelho…</span>
         </div>
-
-        <div id="peersLayer"></div>
-
-        <div class="empty-state" id="emptyState">
-          <p class="empty-title">Nenhum dispositivo por perto… ainda</p>
-          <p class="empty-sub">
-            Abra esta mesma página em outro aparelho na <strong>mesma rede Wi-Fi</strong><br />
-            ou compartilhe uma <strong>sala com código</strong> aqui embaixo. 👇
-          </p>
-        </div>
+        <span id="connDot" class="dot dot-off" title="Conexão"></span>
+        <button id="openRoomBtn" class="btn-icon" title="Conectar outro aparelho / sala">🔗</button>
       </div>
+    </header>
 
-      <p class="hint">
-        Toque em um dispositivo para enviar arquivos ou texto.
-        Você também pode <strong>arrastar arquivos</strong> para qualquer lugar da tela.
-      </p>
-    </section>
-
-    <!-- VOCÊ + SALA -->
-    <section class="panel-grid">
-      <article class="card">
-        <h2>📛 Seu nome nesta rede</h2>
-        <div class="name-row">
-          <div class="avatar" id="myAvatarPreview">?</div>
-          <input id="myName" type="text" maxlength="40" placeholder="Seu nome" autocomplete="off" />
-          <button id="saveName" class="btn btn-ghost">Salvar</button>
-        </div>
-        <p class="muted" id="deviceInfo">Detectando dispositivo…</p>
-      </article>
-
-      <article class="card">
-        <h2>🚪 Sala com código <span class="tag">internet</span></h2>
-        <div id="roomNetwork">
-          <p class="muted">
-            Agora você está visível só para quem está na <strong>mesma rede</strong>.
-            Para enviar para alguém longe, crie uma sala e passe o código.
-          </p>
-          <div class="row">
-            <button id="createRoom" class="btn btn-primary">Criar sala</button>
-          </div>
-          <div class="row join-row">
-            <input id="joinCode" type="text" placeholder="Ex.: K7P2QX" maxlength="12" autocomplete="off" />
-            <button id="joinRoom" class="btn btn-ghost">Entrar</button>
-          </div>
-        </div>
-
-        <div id="roomActive" class="hidden">
-          <p class="muted">Qualquer pessoa com este código/link entra na sala:</p>
-          <div class="code-box">
-            <span id="roomCodeLabel">------</span>
-            <button id="copyCode" class="btn btn-ghost btn-sm">Copiar código</button>
-            <button id="copyLink" class="btn btn-ghost btn-sm">Copiar link</button>
-          </div>
-          <div id="qrBox" class="qr-box"></div>
-          <button id="leaveRoom" class="btn btn-danger-ghost">Sair da sala (voltar à rede local)</button>
-        </div>
-      </article>
-    </section>
-
-    <!-- TRANSFERÊNCIAS -->
-    <section class="card transfers-card">
-      <div class="card-head">
-        <h2>📦 Transferências</h2>
-        <button id="clearHistory" class="btn btn-ghost btn-sm">Limpar concluídas</button>
+    <main id="chat" class="chat">
+      <div id="emptyState" class="empty">
+        <div class="empty-icon">📥</div>
+        <h1>Arraste arquivos para cá</h1>
+        <p>ou digite uma mensagem aqui embaixo e envie.<br />É como um chat — rápido e direto.</p>
+        <p class="empty-hint" id="emptyHint">Abra esta página em outro aparelho para conectar.</p>
       </div>
-      <div id="transfers" class="transfers">
-        <p class="muted" id="noTransfers">Nada por aqui ainda. Envie ou receba um arquivo para ver o progresso.</p>
-      </div>
-    </section>
+      <!-- mensagens e arquivos aparecem aqui -->
+    </main>
 
-    <section class="how">
-      <div>
-        <h3>🔒 Privado de verdade</h3>
-        <p>Arquivos e textos vão <strong>direto de um navegador para o outro</strong> (WebRTC, criptografado). Nosso servidor só apresenta os dispositivos — ele nunca vê seus arquivos.</p>
-      </div>
-      <div>
-        <h3>📶 Rede local ou internet</h3>
-        <p>Na mesma Wi-Fi, os aparelhos se acham sozinhos. Longe, basta uma <strong>sala com código</strong> de 6 letras.</p>
-      </div>
-      <div>
-        <h3>🚫 Sem cadastro, sem nuvem</h3>
-        <p>Nada de conta, upload ou limite de servidor. Fechou a aba, acabou — nenhum arquivo fica guardado.</p>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    NossoDrop · feito em casa 🏠 · funciona em celular, tablet e computador — é só abrir a página
-  </footer>
-
-  <!-- MODAL: ações do dispositivo -->
-  <div id="peerModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
-    <div class="modal">
-      <button class="modal-close" data-close aria-label="Fechar">✕</button>
-      <div class="avatar avatar-lg" id="modalAvatar">?</div>
-      <h3 id="modalPeerName">Dispositivo</h3>
-      <p class="muted" id="modalPeerMeta"></p>
-      <div class="modal-actions">
-        <button id="modalSendFile" class="btn btn-primary btn-block">📁 Enviar arquivo(s)</button>
-        <button id="modalSendText" class="btn btn-ghost btn-block">💬 Enviar texto / link</button>
-      </div>
-    </div>
+    <footer class="composer">
+      <button id="attachBtn" class="btn-circle" title="Enviar arquivo">＋</button>
+      <textarea id="composerInput" rows="1" placeholder="Digite uma mensagem…"></textarea>
+      <button id="sendBtn" class="btn-send" title="Enviar">➤</button>
+    </footer>
   </div>
 
-  <!-- MODAL: enviar texto -->
-  <div id="textModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+  <!-- MODAL: conectar / sala -->
+  <div id="roomModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
     <div class="modal">
       <button class="modal-close" data-close aria-label="Fechar">✕</button>
-      <h3>💬 Enviar texto</h3>
-      <p class="muted" id="textModalTo"></p>
-      <textarea id="textInput" rows="5" placeholder="Cole um link, uma senha, um trecho de código…"></textarea>
-      <button id="sendTextBtn" class="btn btn-primary btn-block">Enviar agora</button>
+      <h3>🔗 Conectar aparelho</h3>
+      <p class="muted">Na mesma Wi-Fi, basta abrir esta página no outro aparelho — ele aparece sozinho aqui no topo. Para longe, use uma sala:</p>
+
+      <label class="label">Seu nome</label>
+      <div class="row">
+        <input id="myName" type="text" maxlength="40" placeholder="Seu nome" autocomplete="off" />
+        <button id="saveName" class="btn">Salvar</button>
+      </div>
+      <p class="muted small" id="deviceInfo"></p>
+
+      <div id="roomNetwork">
+        <div class="row">
+          <button id="createRoom" class="btn btn-primary">Criar sala</button>
+        </div>
+        <div class="row">
+          <input id="joinCode" type="text" placeholder="Código. Ex.: K7P2QX" maxlength="12" autocomplete="off" />
+          <button id="joinRoom" class="btn">Entrar</button>
+        </div>
+      </div>
+
+      <div id="roomActive" class="hidden">
+        <p class="muted">Passe este código ou link para a outra pessoa:</p>
+        <div class="code-box">
+          <span id="roomCodeLabel">------</span>
+        </div>
+        <div class="row">
+          <button id="copyCode" class="btn">Copiar código</button>
+          <button id="copyLink" class="btn">Copiar link</button>
+        </div>
+        <div id="qrBox" class="qr-box"></div>
+        <button id="leaveRoom" class="btn btn-danger">Sair da sala</button>
+      </div>
     </div>
   </div>
 

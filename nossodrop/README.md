@@ -2,9 +2,11 @@
 
 **Nosso AirDrop, no navegador** — compartilhe arquivos e textos entre celular, tablet e computador, estilo [PairDrop](https://pairdrop.net), mas nosso.
 
-- 📶 **Na mesma Wi-Fi:** os dispositivos se descobrem sozinhos (radar na tela)
-- 🚪 **Longe:** crie uma **sala com código** de 6 letras (ou link/QR Code) e qualquer pessoa entra
-- 📁 **Arquivos** (vários de uma vez, arrastar-e-soltar) com barra de progresso e velocidade
+Interface **limpa, tipo chat**: arrastou arquivo → envia como bolha de arquivo; digitou embaixo e enviou → bolha de texto. Sem radar, sem painéis.
+
+- 📶 **Na mesma Wi-Fi:** os dispositivos se descobrem sozinhos (nome aparece no topo)
+- 🚪 **Longe:** crie uma **sala com código** de 6 letras (ou link/QR Code) no botão 🔗
+- 📁 **Arquivos** (vários de uma vez, arrastar-e-soltar ou colar) com barra de progresso e velocidade
 - 💬 **Texto/links** (senha, link, trecho de código) com botão de copiar
 - 🔒 **Privado:** transferência **direta entre navegadores** via WebRTC (criptografado). O servidor só apresenta os dispositivos — **nunca vê seus arquivos**. Sem cadastro, sem nuvem, sem limite do servidor.
 
