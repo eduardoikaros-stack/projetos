@@ -49,3 +49,14 @@ Navegador A ══WebRTC DataChannel (P2P, criptografado)══ Navegador B
 | WebRTC: conexão, envio em pedaços de 64 KB com controle de fluxo, recebimento e remontagem | `public/app.js` |
 
 Descoberta na rede local: o servidor agrupa conexões pelo hash do IP público (quem está atrás do mesmo roteador cai na mesma sala). Salas remotas usam código (`code:<CODIGO>` no servidor).
+
+## Abrir e editar junto (sem depender de preview)
+
+- **Editar junto no navegador (nós dois escrevemos no mesmo projeto):**
+  abra https://github.dev/eduardoikaros-stack/projetos — é o editor do GitHub.
+  Tudo que você salvar lá cai no mesmo repositório que eu edito aqui.
+- **Rodar de verdade em casa (funciona tudo, inclusive enviar):**
+  Windows: dois cliques em `iniciar-windows.bat` · Linux/Mac: `./iniciar.sh`
+  Depois abra outro aparelho na mesma Wi-Fi em `http://<IP-do-PC>:3000`.
+- **Só olhar a página:** pelo GitHub Pages do repositório (após juntar o branch na `main`).
+  No Pages é só visualização — o envio precisa do servidor rodando (item acima).
