@@ -23,4 +23,6 @@ pause
 rem teste com concegue ler ?
 rem RESPOSTA: consigo ler sim! :) - voce escreveu aqui, eu li aqui. Apague estas 2 linhas quando quiser.
 
-não tem forma mais fácil de criar isso e se usar um chat boot nosso ? e usar aqui dentro no lugar do bat?
+rem nao tem forma mais facil de criar isso e se usar um chat boot nosso ? e usar aqui dentro no lugar do bat?
+rem RESPOSTA: tem sim! Criei o arquivo CONVERSA.md aqui no projeto - e nosso caderno/chat.
+rem Voce escreve la, eu leio e respondo la. O .bat volta a ser so o script de iniciar, limpinho.
