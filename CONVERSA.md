@@ -125,3 +125,27 @@ Deixei tudo explicado em `nossodrop/LEIA-DE-MANHA.md`. Bom descanso!
   GPL): segui a lógica com nossa implementação, como você exigiu.
 - Falta quando você acordar: aceitar a junção e ligar nosso servidor
   (casa ou Render, eu guio).
+
+## 🌍 18/nov — pesquisa no mundo inteiro + servidor na nuvem
+
+- Você acordou e pediu: "busque todas as informações do planeta,
+  alguém já deve ter sofrido o mesmo e feito melhor; chineses são
+  bons nisso." Tinha que pesquisar e dei meu melhor hoje.
+- Achei: Render grátis DORME (15 min parado, 1 min pra acordar);
+  Koyeb/Northflank não dormem mas pedem cartão; Railway/Zeabur dão
+  crédito que acaba. E um desenvolvedor CHINÊS resolveu igual a
+  gente: migrou a apresentação do PairDrop pra Cloudflare Workers
+  (projeto PairDrop-cfw) — grátis, sem dormir, sem cartão.
+- Fiz o mesmo caminho com NOSSO código: `nossodrop/nuvem/worker.js`
+  (mesma lógica do servidor de casa, traduzida pra nuvem da
+  Cloudflare). Não copiei código dele (GPL) — só a ideia.
+- Testei com a Ferramenta oficial da Cloudflare rodando aqui dentro,
+  com robô simulando 2 aparelhos: 8/8 testes verdes (mesma rede,
+  chave de 6 dígitos, mesmo segredo, pareado ⭐, sinal, reconectar
+  pelo segredo, sala por código, multi-sala).
+- Relatório da pesquisa: `nossodrop/PESQUISA-DO-MUNDO.md`.
+- Falta só VOCÊ apertar uns botões (5 min, conta sua, sem cartão):
+  passo a passo em `nossodrop/nuvem/GUIA.md`. No fim sai o link que
+  funciona de verdade. Travou? Manda foto da tela.
+- O link antigo do GitHub Pages agora aceita `?servidor=endereço`
+  pra apontar pra nuvem (fica salvo no aparelho).

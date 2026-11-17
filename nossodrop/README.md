@@ -22,6 +22,16 @@ Abra **http://localhost:3000** neste aparelho e, no outro aparelho (mesma Wi-Fi)
 
 Para acessar de onde quiser (internet), suba em qualquer hospedagem Node (Render, Railway, Fly.io, uma VPS…) — o `server.js` escuta na porta da variável `PORT`.
 
+## ☁️ Jeito recomendado hoje: nuvem grátis que NÃO dorme
+
+Pesquisamos o mundo inteiro (`PESQUISA-DO-MUNDO.md`): hospedagem Node
+grátis ou dorme (Render) ou pede cartão. A saída usada lá fora é a
+**Cloudflare Workers** — grátis pra sempre, sem cartão, sem dormir.
+Nossa versão traduzida está em **`nuvem/worker.js`**, com passo a
+passo de cliques em **`nuvem/GUIA.md`** (5 min, conta do dono).
+O link final (`https://nossodrop.<apelido>.workers.dev`) abre a
+página já funcionando, em qualquer rede.
+
 ## Como usar
 
 1. Abra a página nos dois dispositivos
